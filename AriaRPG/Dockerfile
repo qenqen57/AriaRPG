@@ -1,13 +1,20 @@
 # Build stage
-FROM mcr.microsoft.com/dotnet/sdk:6.0 AS build
+FROM mcr.microsoft.com/dotnet/sdk:6.0-alpine AS build
 WORKDIR /src
-COPY ["AriaRPG.csproj", "."]
-RUN dotnet restore
-COPY . .
-RUN dotnet publish -c Release -o /app/publish
 
-# Runtime stage
-FROM mcr.microsoft.com/dotnet/aspnet:6.0 AS final
+# 1. Copy only csproj first → cache NuGet restore
+COPY ["AriaRPG.csproj", "."]
+RUN dotnet restore --runtime linux-musl-x64
+
+# 2. Copy source and publish (only re-runs if source changed)
+COPY . .
+RUN dotnet publish -c Release -o /app/publish \
+    --runtime linux-musl-x64 \
+    --self-contained false \
+    --no-restore
+
+# Runtime stage (Alpine = ~100MB smaller)
+FROM mcr.microsoft.com/dotnet/aspnet:6.0-alpine AS final
 WORKDIR /app
 COPY --from=build /app/publish .
 
@@ -15,6 +22,5 @@ COPY --from=build /app/publish .
 RUN mkdir -p /app/data
 
 EXPOSE 80
-EXPOSE 443
 
 ENTRYPOINT ["dotnet", "AriaRPG.dll"]

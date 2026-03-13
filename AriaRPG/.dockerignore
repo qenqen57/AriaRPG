@@ -1,0 +1,17 @@
+**/bin/
+**/obj/
+**/.vs/
+**/.vscode/
+**/.github/
+**/node_modules/
+**/*.db
+**/*.db-shm
+**/*.db-wal
+**/Dockerfile
+**/docker-compose*.yml
+**/.dockerignore
+**/.git
+**/.gitignore
+**/README.md
+**/*.md
+**/appsettings.Development.json
