@@ -1,0 +1,100 @@
+@inject AriaService AriaService
+
+<div class="fade-in">
+    <div class="aria-card">
+        <div class="aria-card-header">
+            <h4><i class="bi bi-shield-shaded"></i> Armes (@Weapons.Count)</h4>
+            <button class="btn-aria btn-aria-sm" @onclick="AddWeapon">
+                <i class="bi bi-plus-lg"></i> Ajouter
+            </button>
+        </div>
+
+        @if (Weapons.Count == 0)
+        {
+            <p style="color: var(--aria-text-muted); text-align: center; padding: 2rem;">
+                <i class="bi bi-shield-shaded" style="font-size: 2rem; display: block; margin-bottom: 0.5rem;"></i>
+                Aucune arme. Cliquez sur Ajouter pour equiper votre personnage.
+            </p>
+        }
+        else
+        {
+            <table class="aria-table">
+                <thead>
+                    <tr>
+                        <th>Arme</th>
+                        <th>Type</th>
+                        <th>Degats</th>
+                        <th style="width:80px">Portee</th>
+                        <th>Description</th>
+                        <th style="width:80px">Equipe</th>
+                        <th style="width:120px">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var weapon in Weapons)
+                    {
+                        <tr>
+                            <td><input @bind="weapon.Name" placeholder="Nom..." /></td>
+                            <td><input @bind="weapon.Type" placeholder="Type..." /></td>
+                            <td><input @bind="weapon.Damage" placeholder="Ex: 1d8+3" /></td>
+                            <td><input type="number" @bind="weapon.Portee" style="text-align:center" /></td>
+                            <td><input @bind="weapon.Description" placeholder="Description..." /></td>
+                            <td style="text-align:center">
+                                <button class="@(weapon.IsEquipped ? "btn-aria-success" : "btn-aria-outline")"
+                                        style="font-size:0.7rem;padding:0.2rem 0.5rem"
+                                        @onclick="() => ToggleEquip(weapon)">
+                                    @(weapon.IsEquipped ? "Oui" : "Non")
+                                </button>
+                            </td>
+                            <td>
+                                <div style="display:flex; gap: 0.3rem;">
+                                    <button class="btn-aria-success" @onclick="() => SaveWeapon(weapon)">
+                                        <i class="bi bi-check"></i>
+                                    </button>
+                                    <button class="btn-aria-danger" @onclick="() => DeleteWeapon(weapon.Id)">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
+    </div>
+</div>
+
+@code {
+    [Parameter] public int CharacterId { get; set; }
+    [Parameter] public List<Weapon> Weapons { get; set; } = new();
+    [Parameter] public EventCallback OnChanged { get; set; }
+
+    private async Task AddWeapon()
+    {
+        var weapon = new Weapon
+        {
+            CharacterId = CharacterId,
+            Name = "Nouvelle arme",
+            Damage = "1d6"
+        };
+        await AriaService.AddWeaponAsync(weapon);
+        await OnChanged.InvokeAsync();
+    }
+
+    private void ToggleEquip(Weapon weapon)
+    {
+        weapon.IsEquipped = !weapon.IsEquipped;
+    }
+
+    private async Task SaveWeapon(Weapon weapon)
+    {
+        await AriaService.UpdateWeaponAsync(weapon);
+        await OnChanged.InvokeAsync();
+    }
+
+    private async Task DeleteWeapon(int id)
+    {
+        await AriaService.DeleteWeaponAsync(id);
+        await OnChanged.InvokeAsync();
+    }
+}

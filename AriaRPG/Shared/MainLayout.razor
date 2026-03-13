@@ -1,0 +1,19 @@
+﻿@inherits LayoutComponentBase
+
+<div class="aria-layout">
+    <div class="aria-overlay @(SidebarOpen ? "open" : "")" @onclick="CloseSidebar"></div>
+    <NavMenu AdditionalClass="@(SidebarOpen ? "open" : "")" />
+    <main class="aria-main">
+        <button class="aria-burger" @onclick="ToggleSidebar">
+            <i class="bi bi-list"></i>
+        </button>
+        @Body
+    </main>
+</div>
+
+@code {
+    private bool SidebarOpen;
+
+    private void ToggleSidebar() => SidebarOpen = !SidebarOpen;
+    private void CloseSidebar() => SidebarOpen = false;
+}

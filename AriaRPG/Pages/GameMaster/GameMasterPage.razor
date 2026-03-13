@@ -1,0 +1,311 @@
+@page "/gamemaster/{PlayerId:int}"
+@inject AriaService AriaService
+@inject NavigationManager Nav
+
+<PageTitle>@(player?.Name ?? "Maître de Jeu") - Aria RPG</PageTitle>
+
+<div class="fade-in">
+    @if (player == null)
+    {
+        <p style="color: var(--aria-text-muted);"><i class="bi bi-hourglass-split"></i> Chargement...</p>
+    }
+    else
+    {
+        <div style="margin-bottom: 2rem;">
+            <h1><i class="bi bi-star-fill" style="color: var(--aria-primary);"></i> @player.Name</h1>
+            <p style="color: var(--aria-text-muted);">Panneau de contrôle du Maître de Jeu</p>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="aria-card">
+            <div class="aria-card-header">
+                <h3><i class="bi bi-lightning-charge"></i> Actions Rapides</h3>
+            </div>
+            <div class="gm-actions-grid">
+                <button class="gm-action-btn" @onclick="RollDice">
+                    <i class="bi bi-dice-5-fill"></i>
+                    <span>Lancer les Dés</span>
+                </button>
+                <button class="gm-action-btn" @onclick="ShortRest">
+                    <i class="bi bi-cup-hot"></i>
+                    <span>Repos Court</span>
+                </button>
+                <button class="gm-action-btn" @onclick="LongRest">
+                    <i class="bi bi-moon-stars"></i>
+                    <span>Repos Long</span>
+                </button>
+                <button class="gm-action-btn gm-action-danger" @onclick="DamageAll">
+                    <i class="bi bi-fire"></i>
+                    <span>Dégâts de Zone</span>
+                </button>
+                <button class="gm-action-btn" @onclick="() => BuffAll(5)">
+                    <i class="bi bi-arrow-up-circle"></i>
+                    <span>Buff Tous +5</span>
+                </button>
+                <button class="gm-action-btn gm-action-danger" @onclick="ClearAllBuffs">
+                    <i class="bi bi-x-circle"></i>
+                    <span>Retirer Tous Buffs</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Dice Result -->
+        @if (diceResult != null)
+        {
+            <div class="aria-card" style="border-color: var(--aria-primary); text-align: center;">
+                <div style="font-size: 0.8rem; text-transform: uppercase; color: var(--aria-text-muted); letter-spacing: 1px;">Résultat du Dé</div>
+                <div style="font-size: 3rem; font-weight: 700; color: var(--aria-primary); font-family: 'Cinzel', serif;">@diceResult</div>
+                <div style="font-size: 0.85rem; color: var(--aria-text-muted);">@diceDescription</div>
+            </div>
+        }
+
+        <!-- Player Management -->
+        <div class="aria-card">
+            <div class="aria-card-header">
+                <h3><i class="bi bi-people"></i> Gestion des Joueurs</h3>
+            </div>
+
+            @if (allPlayers == null)
+            {
+                <p style="color: var(--aria-text-muted);">Chargement...</p>
+            }
+            else
+            {
+                <div class="gm-player-list">
+                    @foreach (var p in allPlayers.Where(p => p.Role == PlayerRole.Joueur))
+                    {
+                        <div class="gm-player-row">
+                            <div class="gm-player-info">
+                                <i class="bi bi-person-fill" style="color: var(--aria-primary);"></i>
+                                <div>
+                                    <strong>@p.Name</strong>
+                                    @if (p.Character != null)
+                                    {
+                                        <div style="font-size: 0.8rem; color: var(--aria-text-muted);">
+                                            @p.Character.Name — @p.Character.Race @p.Character.Classe Niv. @p.Character.Niveau
+                                        </div>
+                                    }
+                                    else
+                                    {
+                                        <div style="font-size: 0.8rem; color: var(--aria-text-muted);">Pas de personnage</div>
+                                    }
+                                </div>
+                            </div>
+
+                            @if (p.Character != null)
+                            {
+                                <div class="gm-player-hp">
+                                    @{
+                                        var pct = p.Character.PointsDeVieMax > 0
+                                            ? (double)p.Character.PointsDeVieActuels / p.Character.PointsDeVieMax * 100
+                                            : 0;
+                                        var hpClass = pct > 60 ? "hp-high" : pct > 30 ? "hp-mid" : "hp-low";
+                                    }
+                                    <div class="hp-bar-container" style="width: 120px;">
+                                        <div class="hp-bar @hpClass" style="width: @((int)pct)%"></div>
+                                    </div>
+                                    <span class="hp-text">@p.Character.PointsDeVieActuels / @p.Character.PointsDeVieMax</span>
+                                </div>
+
+                                <!-- Buff controls per player -->
+                                <div class="gm-player-buff">
+                                    <span style="font-size: 0.7rem; color: var(--aria-text-muted); text-transform: uppercase; letter-spacing: 0.5px;">Buff</span>
+                                    <div class="skill-bonus-controls">
+                                        <button class="btn-bonus" @onclick="() => ModifyBuff(p, -5)">-5</button>
+                                        <button class="btn-bonus" @onclick="() => ModifyBuff(p, -1)">-1</button>
+                                        <span class="skill-buff-value @(p.Character.BuffCompetences > 0 ? "buff-positive" : p.Character.BuffCompetences < 0 ? "buff-negative" : "")">
+                                            @(p.Character.BuffCompetences >= 0 ? "+" : "")@p.Character.BuffCompetences
+                                        </span>
+                                        <button class="btn-bonus btn-bonus-plus" @onclick="() => ModifyBuff(p, 1)">+1</button>
+                                        <button class="btn-bonus btn-bonus-plus" @onclick="() => ModifyBuff(p, 5)">+5</button>
+                                        @if (p.Character.BuffCompetences != 0)
+                                        {
+                                            <button class="btn-aria-danger btn-aria-sm" style="margin-left: 4px;" title="Retirer le buff"
+                                                    @onclick="() => ClearBuff(p)">
+                                                <i class="bi bi-x-lg"></i>
+                                            </button>
+                                        }
+                                    </div>
+                                </div>
+
+                                <div class="gm-player-actions">
+                                    <button class="btn-aria-success btn-aria-sm" title="Soigner" @onclick="() => HealPlayer(p, 5)">
+                                        <i class="bi bi-heart-pulse"></i> +5
+                                    </button>
+                                    <button class="btn-aria-danger btn-aria-sm" title="Infliger dégâts" @onclick="() => DamagePlayer(p, 5)">
+                                        <i class="bi bi-droplet-fill"></i> -5
+                                    </button>
+                                    <button class="btn-aria-outline btn-aria-sm" title="Voir fiche" @onclick="() => NavigateToPlayer(p.Id)">
+                                        <i class="bi bi-eye"></i>
+                                    </button>
+                                </div>
+                            }
+                        </div>
+                    }
+                </div>
+            }
+        </div>
+
+        <!-- Notes du MJ -->
+        <div class="aria-card">
+            <div class="aria-card-header">
+                <h3><i class="bi bi-journal-text"></i> Notes de Session</h3>
+            </div>
+            <textarea class="aria-input" rows="5" style="width: 100%; resize: vertical;"
+                      placeholder="Prenez des notes pour cette session..."
+                      @bind="sessionNotes"></textarea>
+        </div>
+    }
+</div>
+
+@if (showToast)
+{
+    <div class="aria-toast"><i class="bi bi-check-circle"></i> @toastMessage</div>
+}
+
+@code {
+    [Parameter] public int PlayerId { get; set; }
+
+    private Player? player;
+    private List<Player>? allPlayers;
+    private int? diceResult;
+    private string diceDescription = "";
+    private string sessionNotes = "";
+    private bool showToast;
+    private string toastMessage = "";
+    private Random rng = new();
+
+    protected override async Task OnParametersSetAsync()
+    {
+        player = await AriaService.GetPlayerAsync(PlayerId);
+        allPlayers = await AriaService.GetPlayersAsync();
+    }
+
+    private void RollDice()
+    {
+        diceResult = rng.Next(1, 21);
+        diceDescription = diceResult switch
+        {
+            1 => "Échec critique !",
+            20 => "Réussite critique !",
+            >= 15 => "Beau lancer !",
+            <= 5 => "Aïe...",
+            _ => "d20"
+        };
+    }
+
+    private async Task HealPlayer(Player p, int amount)
+    {
+        if (p.Character == null) return;
+        p.Character.PointsDeVieActuels = Math.Min(
+            p.Character.PointsDeVieActuels + amount,
+            p.Character.PointsDeVieMax);
+        await AriaService.UpdateCharacterAsync(p.Character);
+        await ShowToast($"{p.Character.Name} soigné de {amount} PV");
+    }
+
+    private async Task DamagePlayer(Player p, int amount)
+    {
+        if (p.Character == null) return;
+        p.Character.PointsDeVieActuels = Math.Max(
+            p.Character.PointsDeVieActuels - amount, 0);
+        await AriaService.UpdateCharacterAsync(p.Character);
+        await ShowToast($"{p.Character.Name} subit {amount} dégâts");
+    }
+
+    private async Task ShortRest()
+    {
+        if (allPlayers == null) return;
+        foreach (var p in allPlayers.Where(p => p.Character != null))
+        {
+            var c = p.Character!;
+            c.PointsDeVieActuels = Math.Min(c.PointsDeVieActuels + c.PointsDeVieMax / 4, c.PointsDeVieMax);
+            await AriaService.UpdateCharacterAsync(c);
+        }
+        allPlayers = await AriaService.GetPlayersAsync();
+        await ShowToast("Repos court — tous les joueurs récupèrent 25% PV");
+    }
+
+    private async Task LongRest()
+    {
+        if (allPlayers == null) return;
+        foreach (var p in allPlayers.Where(p => p.Character != null))
+        {
+            var c = p.Character!;
+            c.PointsDeVieActuels = c.PointsDeVieMax;
+            c.PointsDeMana = c.PointsDeManaMax;
+            await AriaService.UpdateCharacterAsync(c);
+        }
+        allPlayers = await AriaService.GetPlayersAsync();
+        await ShowToast("Repos long — tous les joueurs restaurés à 100%");
+    }
+
+    private async Task DamageAll()
+    {
+        if (allPlayers == null) return;
+        var amount = rng.Next(3, 11);
+        foreach (var p in allPlayers.Where(p => p.Character != null))
+        {
+            var c = p.Character!;
+            c.PointsDeVieActuels = Math.Max(c.PointsDeVieActuels - amount, 0);
+            await AriaService.UpdateCharacterAsync(c);
+        }
+        allPlayers = await AriaService.GetPlayersAsync();
+        await ShowToast($"Dégâts de zone — {amount} dégâts infligés à tous !");
+    }
+
+    private void NavigateToPlayer(int id)
+    {
+        Nav.NavigateTo($"/character/{id}");
+    }
+
+    private async Task ModifyBuff(Player p, int delta)
+    {
+        if (p.Character == null) return;
+        p.Character.BuffCompetences += delta;
+        await AriaService.UpdateCharacterAsync(p.Character);
+        await ShowToast($"{p.Character.Name} : buff {(delta > 0 ? "+" : "")}{delta} (total : {(p.Character.BuffCompetences >= 0 ? "+" : "")}{p.Character.BuffCompetences})");
+    }
+
+    private async Task ClearBuff(Player p)
+    {
+        if (p.Character == null) return;
+        p.Character.BuffCompetences = 0;
+        await AriaService.UpdateCharacterAsync(p.Character);
+        await ShowToast($"Buff retiré de {p.Character.Name}");
+    }
+
+    private async Task BuffAll(int amount)
+    {
+        if (allPlayers == null) return;
+        foreach (var p in allPlayers.Where(p => p.Character != null))
+        {
+            p.Character!.BuffCompetences += amount;
+            await AriaService.UpdateCharacterAsync(p.Character);
+        }
+        allPlayers = await AriaService.GetPlayersAsync();
+        await ShowToast($"Buff +{amount} appliqué à tous les joueurs !");
+    }
+
+    private async Task ClearAllBuffs()
+    {
+        if (allPlayers == null) return;
+        foreach (var p in allPlayers.Where(p => p.Character != null))
+        {
+            p.Character!.BuffCompetences = 0;
+            await AriaService.UpdateCharacterAsync(p.Character);
+        }
+        allPlayers = await AriaService.GetPlayersAsync();
+        await ShowToast("Tous les buffs ont été retirés");
+    }
+
+    private async Task ShowToast(string msg)
+    {
+        toastMessage = msg;
+        showToast = true;
+        StateHasChanged();
+        await Task.Delay(2500);
+        showToast = false;
+        StateHasChanged();
+    }
+}

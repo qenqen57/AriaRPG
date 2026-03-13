@@ -1,0 +1,12 @@
+{
+  "scenarioId": "New-DotNet-Version",
+  "operationId": "5ca1a4ae-bbaf-4b18-9360-b237eb379c16",
+  "description": "Upgrade solution or project to new version of .NET",
+  "startTime": "2026-03-11T21:16:04.5963363Z",
+  "lastUpdateTime": "2026-03-13T13:05:40.6834685Z",
+  "stage": "Planning",
+  "properties": {
+    "SelectedScenarioStrategy": "AllAtOnce"
+  },
+  "folderPath": ""
+}

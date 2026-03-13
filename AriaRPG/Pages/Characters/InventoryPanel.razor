@@ -1,0 +1,101 @@
+@inject AriaService AriaService
+
+<div class="fade-in">
+    <div class="aria-card">
+        <div class="aria-card-header">
+            <h4><i class="bi bi-backpack"></i> Inventaire (@Items.Count objets - @Items.Sum(i => i.Weight * i.Quantity) kg)</h4>
+            <button class="btn-aria btn-aria-sm" @onclick="AddItem">
+                <i class="bi bi-plus-lg"></i> Ajouter
+            </button>
+        </div>
+
+        @if (Items.Count == 0)
+        {
+            <p style="color: var(--aria-text-muted); text-align: center; padding: 2rem;">
+                <i class="bi bi-backpack" style="font-size: 2rem; display: block; margin-bottom: 0.5rem;"></i>
+                Inventaire vide. Cliquez sur Ajouter pour remplir votre sac.
+            </p>
+        }
+        else
+        {
+            <table class="aria-table">
+                <thead>
+                    <tr>
+                        <th>Objet</th>
+                        <th>Categorie</th>
+                        <th style="width:80px">Qte</th>
+                        <th style="width:90px">Poids (kg)</th>
+                        <th>Description</th>
+                        <th style="width:120px">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in Items)
+                    {
+                        <tr>
+                            <td><input @bind="item.Name" placeholder="Nom..." /></td>
+                            <td>
+                                <select class="form-select form-select-sm" @bind="item.Category">
+                                    <option value="Divers">Divers</option>
+                                    <option value="Potion">Potion</option>
+                                    <option value="Nourriture">Nourriture</option>
+                                    <option value="Outil">Outil</option>
+                                    <option value="Materiau">Materiau</option>
+                                    <option value="Tresor">Tresor</option>
+                                    <option value="Parchemin">Parchemin</option>
+                                    <option value="Armure">Armure</option>
+                                    <option value="Vetement">Vetement</option>
+                                    <option value="Cle">Cle</option>
+                                </select>
+                            </td>
+                            <td><input type="number" @bind="item.Quantity" style="text-align:center" min="0" /></td>
+                            <td><input type="number" @bind="item.Weight" style="text-align:center" step="0.1" min="0" /></td>
+                            <td><input @bind="item.Description" placeholder="Description..." /></td>
+                            <td>
+                                <div style="display:flex; gap: 0.3rem;">
+                                    <button class="btn-aria-success" @onclick="() => SaveItem(item)">
+                                        <i class="bi bi-check"></i>
+                                    </button>
+                                    <button class="btn-aria-danger" @onclick="() => DeleteItem(item.Id)">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
+    </div>
+</div>
+
+@code {
+    [Parameter] public int CharacterId { get; set; }
+    [Parameter] public List<InventoryItem> Items { get; set; } = new();
+    [Parameter] public EventCallback OnChanged { get; set; }
+
+    private async Task AddItem()
+    {
+        var item = new InventoryItem
+        {
+            CharacterId = CharacterId,
+            Name = "Nouvel objet",
+            Quantity = 1,
+            Category = "Divers"
+        };
+        await AriaService.AddInventoryItemAsync(item);
+        await OnChanged.InvokeAsync();
+    }
+
+    private async Task SaveItem(InventoryItem item)
+    {
+        await AriaService.UpdateInventoryItemAsync(item);
+        await OnChanged.InvokeAsync();
+    }
+
+    private async Task DeleteItem(int id)
+    {
+        await AriaService.DeleteInventoryItemAsync(id);
+        await OnChanged.InvokeAsync();
+    }
+}

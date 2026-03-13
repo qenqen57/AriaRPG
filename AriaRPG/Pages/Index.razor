@@ -1,0 +1,93 @@
+@page "/"
+@inject AriaService AriaService
+
+<PageTitle>Aria RPG - Tableau de Bord</PageTitle>
+
+<div class="fade-in">
+    <div style="margin-bottom: 2rem;">
+        <h1><i class="bi bi-shield-shaded"></i> Tableau de Bord</h1>
+        <p style="color: var(--aria-text-muted);">Vue d ensemble de tous les personnages de la campagne</p>
+    </div>
+
+    @if (players == null)
+    {
+        <p style="color: var(--aria-text-muted);"><i class="bi bi-hourglass-split"></i> Chargement...</p>
+    }
+    else
+    {
+        <div class="row g-4">
+            @foreach (var player in players)
+            {
+                var href = player.Role == PlayerRole.MaitreDeJeu
+                    ? $"gamemaster/{player.Id}"
+                    : $"character/{player.Id}";
+
+                <div class="col-lg-3 col-md-6">
+                    <a href="@href" style="text-decoration:none;">
+                        <div class="player-card">
+                            <div class="player-card-banner" style="@(player.Role == PlayerRole.MaitreDeJeu ? "background: linear-gradient(135deg, #2d1b69, #e0a526);" : "")">
+                                <div class="player-card-avatar">
+                                    @if (player.Role == PlayerRole.MaitreDeJeu)
+                                    {
+                                        <i class="bi bi-star-fill"></i>
+                                    }
+                                    else
+                                    {
+                                        <i class="bi bi-person-fill"></i>
+                                    }
+                                </div>
+                            </div>
+                            <div class="player-card-body">
+                                <h4>@player.Name</h4>
+                                @if (player.Role == PlayerRole.MaitreDeJeu)
+                                {
+                                    <div class="char-name">Maître de Jeu</div>
+                                    <div class="char-info">
+                                        <span class="badge-aria" style="background: rgba(224, 165, 38, 0.25);">
+                                            <i class="bi bi-star-fill"></i> MJ
+                                        </span>
+                                    </div>
+                                }
+                                else if (player.Character != null)
+                                {
+                                    <div class="char-name">@player.Character.Name</div>
+                                    <div class="char-info">
+                                        <span class="badge-aria">@player.Character.Race</span>
+                                        <span class="badge-aria">@player.Character.Classe</span>
+                                        <span class="badge-aria">Niv. @player.Character.Niveau</span>
+                                    </div>
+                                    <div style="margin-top: 0.8rem;">
+                                        @{
+                                            var pct = player.Character.PointsDeVieMax > 0
+                                                ? (double)player.Character.PointsDeVieActuels / player.Character.PointsDeVieMax * 100
+                                                : 0;
+                                            var hpClass = pct > 60 ? "hp-high" : pct > 30 ? "hp-mid" : "hp-low";
+                                        }
+                                        <div class="hp-bar-container">
+                                            <div class="hp-bar @hpClass" style="width: @((int)pct)%"></div>
+                                        </div>
+                                        <div class="hp-text">@player.Character.PointsDeVieActuels / @player.Character.PointsDeVieMax PV</div>
+                                    </div>
+                                }
+                                else
+                                {
+                                    <div class="char-name">Pas de personnage</div>
+                                    <p style="font-size: 0.8rem; color: var(--aria-text-muted);">Cliquez pour en creer un</p>
+                                }
+                            </div>
+                        </div>
+                    </a>
+                </div>
+            }
+        </div>
+    }
+</div>
+
+@code {
+    private List<Player>? players;
+
+    protected override async Task OnInitializedAsync()
+    {
+        players = await AriaService.GetPlayersAsync();
+    }
+}

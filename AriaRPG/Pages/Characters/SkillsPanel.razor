@@ -1,0 +1,130 @@
+@inject AriaService AriaService
+
+<div class="fade-in">
+    <!-- Buff Display (read-only, managed by GM) -->
+    @if (Character.BuffCompetences != 0)
+    {
+        <div class="aria-card buff-banner @(Character.BuffCompetences > 0 ? "buff-banner-positive" : "buff-banner-negative")">
+            <div style="display: flex; align-items: center; gap: 0.8rem;">
+                <i class="bi @(Character.BuffCompetences > 0 ? "bi-arrow-up-circle-fill" : "bi-arrow-down-circle-fill")"
+                   style="font-size: 1.5rem;"></i>
+                <div>
+                    <strong>Buff actif : @(Character.BuffCompetences > 0 ? "+" : "")@Character.BuffCompetences</strong>
+                    <div style="font-size: 0.8rem; opacity: 0.8;">
+                        Appliqué à toutes les compétences par le Maître de Jeu
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+
+    <!-- Predefined Skills -->
+    <div class="aria-card">
+        <div class="aria-card-header">
+            <h4><i class="bi bi-lightning"></i> Compétences</h4>
+            <div style="font-size: 0.75rem; color: var(--aria-text-muted);">
+                Total = Base + Bonus @(Character.BuffCompetences != 0 ? "+ Buff" : "")
+            </div>
+        </div>
+
+        <div class="skill-list">
+            @foreach (var skill in PredefinedSkills)
+            {
+                var baseScore = CalculateBase(skill.Stat1, skill.Stat2);
+                var bonus = GetBonus(skill.Name);
+                var total = baseScore + bonus + Character.BuffCompetences;
+                var totalClass = total >= 40 ? "skill-high" : total >= 25 ? "skill-mid" : "skill-low";
+
+                <div class="skill-row">
+                    <div class="skill-row-top">
+                        <span class="skill-name">@skill.Name</span>
+                        <span class="skill-score @totalClass">@total</span>
+                    </div>
+                    <div class="skill-row-bottom">
+                        <div class="skill-meta">
+                            <span class="skill-link-badge">@skill.Stat1Label</span>
+                            <span style="color: var(--aria-text-muted); font-size: 0.7rem;">/</span>
+                            <span class="skill-link-badge">@skill.Stat2Label</span>
+                            <span class="skill-base-label">base @baseScore</span>
+                        </div>
+                        <div class="skill-bonus-controls">
+                            <button class="btn-bonus" @onclick="() => ModifyBonus(skill.Name, -5)">-5</button>
+                            <button class="btn-bonus" @onclick="() => ModifyBonus(skill.Name, -1)">-1</button>
+                            <span class="skill-bonus-value @(bonus != 0 ? "has-bonus" : "")">
+                                @(bonus >= 0 ? "+" : "")@bonus
+                            </span>
+                            <button class="btn-bonus btn-bonus-plus" @onclick="() => ModifyBonus(skill.Name, 1)">+1</button>
+                            <button class="btn-bonus btn-bonus-plus" @onclick="() => ModifyBonus(skill.Name, 5)">+5</button>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter] public int CharacterId { get; set; }
+    [Parameter] public Character Character { get; set; } = null!;
+    [Parameter] public List<CharacterSkill> Skills { get; set; } = new();
+    [Parameter] public EventCallback OnChanged { get; set; }
+
+    private record SkillDefinition(string Name, string Stat1Label, string Stat2Label,
+        Func<Character, int> Stat1, Func<Character, int> Stat2);
+
+    private static readonly List<SkillDefinition> PredefinedSkills = new()
+    {
+        new("Artisanat, construire",       "DEX", "INT", c => c.Dexterite,    c => c.Intelligence),
+        new("Combat rapproché",            "FOR", "DEX", c => c.Force,        c => c.Dexterite),
+        new("Combat à distance",           "DEX", "INT", c => c.Dexterite,    c => c.Intelligence),
+        new("Connaissance de la nature",   "DEX", "INT", c => c.Dexterite,    c => c.Intelligence),
+        new("Connaissance des secrets",    "INT", "CHA", c => c.Intelligence, c => c.Charisme),
+        new("Courir, sauter",              "DEX", "END", c => c.Dexterite,    c => c.Endurance),
+        new("Discrétion",                  "DEX", "CHA", c => c.Dexterite,    c => c.Charisme),
+        new("Droit",                       "INT", "CHA", c => c.Intelligence, c => c.Charisme),
+        new("Esquiver",                    "DEX", "INT", c => c.Dexterite,    c => c.Intelligence),
+        new("Intimider",                   "FOR", "CHA", c => c.Force,        c => c.Charisme),
+        new("Lire, écrire",               "INT", "CHA", c => c.Intelligence, c => c.Charisme),
+        new("Mentir, convaincre",          "INT", "CHA", c => c.Intelligence, c => c.Charisme),
+        new("Perception",                  "INT", "CHA", c => c.Intelligence, c => c.Charisme),
+        new("Piloter",                     "DEX", "END", c => c.Dexterite,    c => c.Endurance),
+        new("Psychologie",                 "END", "INT", c => c.Endurance,    c => c.Intelligence),
+        new("Réflexes",                    "DEX", "INT", c => c.Dexterite,    c => c.Intelligence),
+        new("Serrures et pièges",          "DEX", "END", c => c.Dexterite,    c => c.Endurance),
+        new("Soigner",                     "INT", "CHA", c => c.Intelligence, c => c.Charisme),
+        new("Survie",                      "END", "INT", c => c.Endurance,    c => c.Intelligence),
+        new("Voler",                       "INT", "CHA", c => c.Intelligence, c => c.Charisme),
+    };
+
+    private int CalculateBase(Func<Character, int> stat1, Func<Character, int> stat2)
+    {
+        return (int)((stat1(Character) + stat2(Character)) * 2.5);
+    }
+
+    private int GetBonus(string skillName)
+    {
+        var entry = Skills.FirstOrDefault(s => s.Name == skillName);
+        return entry?.Value ?? 0;
+    }
+
+    private async Task ModifyBonus(string skillName, int delta)
+    {
+        var entry = Skills.FirstOrDefault(s => s.Name == skillName);
+        if (entry != null)
+        {
+            entry.Value += delta;
+            await AriaService.UpdateSkillAsync(entry);
+        }
+        else
+        {
+            var newSkill = new CharacterSkill
+            {
+                CharacterId = CharacterId,
+                Name = skillName,
+                Value = delta
+            };
+            await AriaService.AddSkillAsync(newSkill);
+        }
+        await OnChanged.InvokeAsync();
+    }
+}

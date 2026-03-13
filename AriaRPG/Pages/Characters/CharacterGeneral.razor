@@ -1,0 +1,167 @@
+<div class="fade-in">
+    <!-- Info generales (rétractable) -->
+    <div class="aria-card">
+        <div class="aria-card-header" style="cursor: pointer;" @onclick="() => showInfo = !showInfo">
+            <h4>
+                <i class="bi @(showInfo ? "bi-chevron-down" : "bi-chevron-right")" style="font-size: 0.85rem; margin-right: 0.3rem;"></i>
+                <i class="bi bi-person-badge"></i> Informations Générales
+            </h4>
+            <button class="btn-aria btn-aria-sm" @onclick="Save" @onclick:stopPropagation="true">
+                <i class="bi bi-save"></i> Sauvegarder
+            </button>
+        </div>
+        @if (showInfo)
+        {
+            <div class="row">
+                <div class="col-md-4">
+                    <div class="aria-form-group">
+                        <label>Nom</label>
+                        <input class="form-control" @bind="Character.Name" />
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="aria-form-group">
+                        <label>Race</label>
+                        <input class="form-control" @bind="Character.Race" />
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="aria-form-group">
+                        <label>Classe</label>
+                        <input class="form-control" @bind="Character.Classe" />
+                    </div>
+                </div>
+                <div class="col-md-2">
+                    <div class="aria-form-group">
+                        <label>Niveau</label>
+                        <input type="number" class="form-control" @bind="Character.Niveau" />
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+
+    <!-- Points de vie -->
+    <div class="aria-card">
+        <div class="aria-card-header">
+            <h4><i class="bi bi-heart-pulse"></i> Points de Vie</h4>
+        </div>
+        @{
+            var hpPct = Character.PointsDeVieMax > 0
+                ? (double)Character.PointsDeVieActuels / Character.PointsDeVieMax * 100 : 0;
+            var hpCls = hpPct > 60 ? "hp-high" : hpPct > 30 ? "hp-mid" : "hp-low";
+        }
+        <div class="hp-bar-container" style="height: 20px; margin-bottom: 0.8rem;">
+            <div class="hp-bar @hpCls" style="width: @((int)hpPct)%"></div>
+        </div>
+        <div class="row align-items-center">
+            <div class="col">
+                <div class="aria-form-group">
+                    <label>Actuels</label>
+                    <input type="number" class="form-control" @bind="Character.PointsDeVieActuels" />
+                </div>
+            </div>
+            <div class="col-auto" style="font-size:1.5rem; color: var(--aria-text-muted);">/</div>
+            <div class="col">
+                <div class="aria-form-group">
+                    <label>Maximum</label>
+                    <input type="number" class="form-control" @bind="Character.PointsDeVieMax" />
+                </div>
+            </div>
+            <div class="col-auto">
+                <button class="btn-aria-success" style="margin-top: 1rem;" @onclick="HealFull">
+                    <i class="bi bi-heart"></i> Max
+                </button>
+            </div>
+        </div>
+        <div style="display:flex; gap: 0.5rem; margin-top: 0.5rem;">
+            <button class="btn-aria-danger" @onclick="() => ModifyHp(-1)">-1</button>
+            <button class="btn-aria-danger" @onclick="() => ModifyHp(-5)">-5</button>
+            <button class="btn-aria-danger" @onclick="() => ModifyHp(-10)">-10</button>
+            <button class="btn-aria-success" @onclick="() => ModifyHp(1)">+1</button>
+            <button class="btn-aria-success" @onclick="() => ModifyHp(5)">+5</button>
+            <button class="btn-aria-success" @onclick="() => ModifyHp(10)">+10</button>
+        </div>
+    </div>
+
+    <!-- Caracteristiques -->
+    <div class="aria-card">
+        <div class="aria-card-header">
+            <h4><i class="bi bi-bar-chart"></i> Caracteristiques</h4>
+        </div>
+        <div class="stat-grid">
+            <div class="stat-box">
+                <div class="stat-label">Force</div>
+                <input type="number" @bind="Character.Force" />
+            </div>
+            <div class="stat-box">
+                <div class="stat-label">Dextérité</div>
+                <input type="number" @bind="Character.Dexterite" />
+            </div>
+            <div class="stat-box">
+                <div class="stat-label">Endurance</div>
+                <input type="number" @bind="Character.Endurance" />
+            </div>
+            <div class="stat-box">
+                <div class="stat-label">Intelligence</div>
+                <input type="number" @bind="Character.Intelligence" />
+            </div>
+            <div class="stat-box">
+                <div class="stat-label">Charisme</div>
+                <input type="number" @bind="Character.Charisme" />
+            </div>
+        </div>
+    </div>
+
+    <!-- Autres stats -->
+    <div class="aria-card">
+        <div class="aria-card-header">
+            <h4><i class="bi bi-shield"></i> Combat</h4>
+        </div>
+        <div class="row">
+            <div class="col-md-4">
+                <div class="aria-form-group">
+                    <label>Armure</label>
+                    <input type="number" class="form-control" @bind="Character.Armure" />
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="aria-form-group">
+                    <label>Initiative</label>
+                    <input type="number" class="form-control" @bind="Character.Initiative" />
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notes -->
+    <div class="aria-card">
+        <div class="aria-card-header">
+            <h4><i class="bi bi-journal-text"></i> Notes</h4>
+        </div>
+        <textarea class="form-control" rows="4" @bind="Character.Notes" placeholder="Notes libres sur le personnage..."></textarea>
+    </div>
+
+    <div style="text-align: right; margin-top: 1rem;">
+        <button class="btn-aria" @onclick="Save">
+            <i class="bi bi-save"></i> Sauvegarder toutes les modifications
+        </button>
+    </div>
+</div>
+
+@code {
+    [Parameter] public Character Character { get; set; } = null!;
+    [Parameter] public EventCallback OnSave { get; set; }
+
+    private bool showInfo = false;
+
+    private async Task Save() => await OnSave.InvokeAsync();
+
+    private void ModifyHp(int amount)
+    {
+        Character.PointsDeVieActuels = Math.Clamp(
+            Character.PointsDeVieActuels + amount, 0, Character.PointsDeVieMax);
+    }
+
+    private void HealFull() => Character.PointsDeVieActuels = Character.PointsDeVieMax;
+}

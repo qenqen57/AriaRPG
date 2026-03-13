@@ -1,0 +1,110 @@
+@inject AriaService AriaService
+
+<div class="aria-card fade-in" style="max-width: 600px; margin: 2rem auto;">
+    <div class="aria-card-header">
+        <h3><i class="bi bi-plus-circle"></i> Creer un Personnage</h3>
+    </div>
+
+    <EditForm Model="character" OnValidSubmit="HandleSubmit">
+        <DataAnnotationsValidator />
+
+        <div class="aria-form-group">
+            <label>Nom du personnage</label>
+            <InputText class="form-control" @bind-Value="character.Name" placeholder="Ex: Thorin, Elara..." />
+            <ValidationMessage For="() => character.Name" />
+        </div>
+
+        <div class="row">
+            <div class="col-md-6">
+                <div class="aria-form-group">
+                    <label>Race</label>
+                    <InputText class="form-control" @bind-Value="character.Race" placeholder="Ex: Humain, Elfe..." />
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="aria-form-group">
+                    <label>Classe</label>
+                    <InputText class="form-control" @bind-Value="character.Classe" placeholder="Ex: Guerrier, Mage..." />
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-4">
+                <div class="aria-form-group">
+                    <label>Niveau</label>
+                    <InputNumber class="form-control" @bind-Value="character.Niveau" />
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="aria-form-group">
+                    <label>PV Max</label>
+                    <InputNumber class="form-control" @bind-Value="character.PointsDeVieMax" />
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="aria-form-group">
+                    <label>Mana Max</label>
+                    <InputNumber class="form-control" @bind-Value="character.PointsDeManaMax" />
+                </div>
+            </div>
+        </div>
+
+        <h4 style="font-size: 0.95rem; margin: 1.2rem 0 0.8rem;"><i class="bi bi-bar-chart"></i> Caracteristiques</h4>
+        <div class="stat-grid">
+            <div class="stat-box">
+                <div class="stat-label">Force</div>
+                <InputNumber class="form-control" style="text-align:center;font-size:1.2rem;font-weight:600;color:var(--aria-primary)" @bind-Value="character.Force" />
+            </div>
+            <div class="stat-box">
+                <div class="stat-label">Dextérité</div>
+                <InputNumber class="form-control" style="text-align:center;font-size:1.2rem;font-weight:600;color:var(--aria-primary)" @bind-Value="character.Dexterite" />
+            </div>
+            <div class="stat-box">
+                <div class="stat-label">Endurance</div>
+                <InputNumber class="form-control" style="text-align:center;font-size:1.2rem;font-weight:600;color:var(--aria-primary)" @bind-Value="character.Endurance" />
+            </div>
+            <div class="stat-box">
+                <div class="stat-label">Intelligence</div>
+                <InputNumber class="form-control" style="text-align:center;font-size:1.2rem;font-weight:600;color:var(--aria-primary)" @bind-Value="character.Intelligence" />
+            </div>
+            <div class="stat-box">
+                <div class="stat-label">Charisme</div>
+                <InputNumber class="form-control" style="text-align:center;font-size:1.2rem;font-weight:600;color:var(--aria-primary)" @bind-Value="character.Charisme" />
+            </div>
+        </div>
+
+        <div style="margin-top: 1.5rem; text-align: right;">
+            <button type="submit" class="btn-aria">
+                <i class="bi bi-check-lg"></i> Creer le personnage
+            </button>
+        </div>
+    </EditForm>
+</div>
+
+@code {
+    [Parameter] public int PlayerId { get; set; }
+    [Parameter] public EventCallback OnCreated { get; set; }
+
+    private Character character = new()
+    {
+        Niveau = 1,
+        Force = 10,
+        Dexterite = 10,
+        Endurance = 10,
+        Intelligence = 10,
+        Charisme = 10,
+        PointsDeVieMax = 20,
+        PointsDeVieActuels = 20,
+        PointsDeManaMax = 0,
+        PointsDeMana = 0
+    };
+
+    private async Task HandleSubmit()
+    {
+        character.PointsDeVieActuels = character.PointsDeVieMax;
+        character.PointsDeMana = character.PointsDeManaMax;
+        await AriaService.CreateCharacterAsync(PlayerId, character);
+        await OnCreated.InvokeAsync();
+    }
+}

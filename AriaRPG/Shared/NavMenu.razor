@@ -1,0 +1,45 @@
+@inject AriaService AriaService
+
+<nav class="aria-sidebar @AdditionalClass">
+    <div class="aria-sidebar-brand">
+        <h2><i class="bi bi-shield-shaded"></i> ARIA</h2>
+        <div class="subtitle">Gestion de Campagne</div>
+    </div>
+    <ul class="aria-nav">
+        <li class="aria-nav-item">
+            <NavLink href="/" Match="NavLinkMatch.All">
+                <i class="bi bi-house"></i> Tableau de Bord
+            </NavLink>
+        </li>
+        @if (players != null)
+        {
+            @foreach (var player in players)
+            {
+                var href = player.Role == PlayerRole.MaitreDeJeu
+                    ? $"gamemaster/{player.Id}"
+                    : $"character/{player.Id}";
+
+                <li class="aria-nav-item">
+                    <NavLink href="@href">
+                        <i class="@(player.Role == PlayerRole.MaitreDeJeu ? "bi bi-star-fill" : "bi bi-person")"></i>
+                        @player.Name
+                    </NavLink>
+                </li>
+            }
+        }
+    </ul>
+    <div style="padding: 1rem; border-top: 1px solid var(--aria-border); text-align: center;">
+        <small style="color: var(--aria-text-muted);">Aria RPG v1.0</small>
+    </div>
+</nav>
+
+@code {
+    [Parameter] public string AdditionalClass { get; set; } = "";
+
+    private List<Player>? players;
+
+    protected override async Task OnInitializedAsync()
+    {
+        players = await AriaService.GetPlayersAsync();
+    }
+}

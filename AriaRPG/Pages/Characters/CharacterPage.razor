@@ -1,0 +1,132 @@
+@page "/character/{PlayerId:int}"
+@inject AriaService AriaService
+
+<PageTitle>@(player?.Name ?? "Personnage") - Aria RPG</PageTitle>
+
+<div class="fade-in">
+    @if (player == null)
+    {
+        <p style="color: var(--aria-text-muted);"><i class="bi bi-hourglass-split"></i> Chargement...</p>
+    }
+    else if (player.Character == null)
+    {
+        <CreateCharacterForm PlayerId="PlayerId" OnCreated="OnCharacterCreated" />
+    }
+    else
+    {
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+            <div>
+                <h1 style="margin-bottom: 0.2rem;">@player.Character.Name</h1>
+                <div style="display: flex; gap: 0.5rem; align-items: center;">
+                    <span class="badge-aria">@player.Character.Race</span>
+                    <span class="badge-aria">@player.Character.Classe</span>
+                    <span class="badge-aria">Niveau @player.Character.Niveau</span>
+                    <span style="color: var(--aria-text-muted); font-size: 0.85rem; margin-left: 0.5rem;">
+                        <i class="bi bi-person"></i> @player.Name
+                    </span>
+                </div>
+            </div>
+            <button class="btn-aria-danger" @onclick="DeleteCharacter">
+                <i class="bi bi-trash"></i> Supprimer
+            </button>
+        </div>
+
+        <!-- Tabs -->
+        <div class="aria-tabs">
+            <button class="aria-tab @(activeTab == 0 ? "active" : "")" @onclick="() => activeTab = 0">
+                <i class="bi bi-heart-pulse"></i> General
+            </button>
+            <button class="aria-tab @(activeTab == 1 ? "active" : "")" @onclick="() => activeTab = 1">
+                <i class="bi bi-lightning"></i> Competences
+            </button>
+            <button class="aria-tab @(activeTab == 2 ? "active" : "")" @onclick="() => activeTab = 2">
+                <i class="bi bi-stars"></i> Comp. Speciales
+            </button>
+            <button class="aria-tab @(activeTab == 3 ? "active" : "")" @onclick="() => activeTab = 3">
+                <i class="bi bi-shield-shaded"></i> Armes
+            </button>
+            <button class="aria-tab @(activeTab == 4 ? "active" : "")" @onclick="() => activeTab = 4">
+                <i class="bi bi-backpack"></i> Inventaire
+            </button>
+        </div>
+
+        @switch (activeTab)
+        {
+            case 0:
+                <CharacterGeneral Character="player.Character" OnSave="SaveCharacter" />
+                break;
+            case 1:
+                <SkillsPanel CharacterId="player.Character.Id" Character="player.Character" Skills="player.Character.Skills" OnChanged="Reload" />
+                break;
+            case 2:
+                <SpecialSkillsPanel CharacterId="player.Character.Id" SpecialSkills="player.Character.SpecialSkills" OnChanged="Reload" />
+                break;
+            case 3:
+                <WeaponsPanel CharacterId="player.Character.Id" Weapons="player.Character.Weapons" OnChanged="Reload" />
+                break;
+            case 4:
+                <InventoryPanel CharacterId="player.Character.Id" Items="player.Character.Inventory" OnChanged="Reload" />
+                break;
+        }
+    }
+</div>
+
+@if (showToast)
+{
+    <div class="aria-toast"><i class="bi bi-check-circle"></i> @toastMessage</div>
+}
+
+@code {
+    [Parameter] public int PlayerId { get; set; }
+
+    private Player? player;
+    private int activeTab = 0;
+    private bool showToast;
+    private string toastMessage = "";
+
+    protected override async Task OnParametersSetAsync()
+    {
+        player = await AriaService.GetPlayerAsync(PlayerId);
+    }
+
+    private async Task OnCharacterCreated()
+    {
+        player = await AriaService.GetPlayerAsync(PlayerId);
+        StateHasChanged();
+    }
+
+    private async Task SaveCharacter()
+    {
+        if (player?.Character != null)
+        {
+            await AriaService.UpdateCharacterAsync(player.Character);
+            await ShowToast("Personnage sauvegarde !");
+        }
+    }
+
+    private async Task DeleteCharacter()
+    {
+        if (player?.Character != null)
+        {
+            await AriaService.DeleteCharacterAsync(player.Character.Id);
+            player = await AriaService.GetPlayerAsync(PlayerId);
+            StateHasChanged();
+        }
+    }
+
+    private async Task Reload()
+    {
+        player = await AriaService.GetPlayerAsync(PlayerId);
+        StateHasChanged();
+    }
+
+    private async Task ShowToast(string msg)
+    {
+        toastMessage = msg;
+        showToast = true;
+        StateHasChanged();
+        await Task.Delay(2000);
+        showToast = false;
+        StateHasChanged();
+    }
+}

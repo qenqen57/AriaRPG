@@ -1,0 +1,1055 @@
+﻿/* ===== Aria RPG - Custom Theme ===== */
+:root {
+    --aria-bg: #0f0e17;
+    --aria-surface: #1a1a2e;
+    --aria-surface-light: #232340;
+    --aria-primary: #e0a526;
+    --aria-primary-dark: #b8871e;
+    --aria-accent: #ff6b35;
+    --aria-text: #e8e8e8;
+    --aria-text-muted: #8b8b9e;
+    --aria-border: #2d2d4a;
+    --aria-success: #2ecc71;
+    --aria-danger: #e74c3c;
+    --aria-info: #3498db;
+    --aria-hp-green: #2ecc71;
+    --aria-hp-yellow: #f1c40f;
+    --aria-hp-red: #e74c3c;
+    --aria-radius: 12px;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+    margin: 0;
+    padding: 0;
+    font-family: 'Inter', sans-serif;
+    background: var(--aria-bg);
+    color: var(--aria-text);
+    min-height: 100vh;
+}
+
+h1, h2, h3, h4, h5, h6 {
+    font-family: 'Cinzel', serif;
+    color: var(--aria-primary);
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 8px; }
+::-webkit-scrollbar-track { background: var(--aria-bg); }
+::-webkit-scrollbar-thumb { background: var(--aria-border); border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: var(--aria-primary-dark); }
+
+/* ===== Layout ===== */
+.aria-layout {
+    display: flex;
+    min-height: 100vh;
+}
+
+.aria-sidebar {
+    width: 260px;
+    background: var(--aria-surface);
+    border-right: 1px solid var(--aria-border);
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    z-index: 100;
+    transition: transform 0.3s ease;
+}
+
+.aria-sidebar-brand {
+    padding: 1.5rem 1.2rem;
+    text-align: center;
+    border-bottom: 1px solid var(--aria-border);
+}
+
+.aria-sidebar-brand h2 {
+    margin: 0;
+    font-size: 1.5rem;
+    letter-spacing: 3px;
+}
+
+.aria-sidebar-brand .subtitle {
+    font-size: 0.75rem;
+    color: var(--aria-text-muted);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-top: 4px;
+}
+
+.aria-nav {
+    flex: 1;
+    padding: 1rem 0;
+    list-style: none;
+    margin: 0;
+}
+
+.aria-nav-item {
+    list-style: none;
+}
+
+.aria-nav-item a, .aria-nav-item button {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 0.7rem 1.4rem;
+    color: var(--aria-text-muted);
+    text-decoration: none;
+    font-size: 0.9rem;
+    transition: all 0.2s;
+    border: none;
+    background: none;
+    width: 100%;
+    cursor: pointer;
+    text-align: left;
+}
+
+.aria-nav-item a:hover, .aria-nav-item button:hover,
+.aria-nav-item a.active {
+    color: var(--aria-primary);
+    background: rgba(224, 165, 38, 0.08);
+    border-left: 3px solid var(--aria-primary);
+}
+
+.aria-nav-item i {
+    font-size: 1.1rem;
+    width: 24px;
+    text-align: center;
+}
+
+.aria-main {
+    flex: 1;
+    margin-left: 260px;
+    padding: 2rem;
+    min-height: 100vh;
+}
+
+/* ===== Cards ===== */
+.aria-card {
+    background: var(--aria-surface);
+    border: 1px solid var(--aria-border);
+    border-radius: var(--aria-radius);
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    transition: border-color 0.3s;
+}
+
+.aria-card:hover {
+    border-color: var(--aria-primary-dark);
+}
+
+.aria-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+    padding-bottom: 0.8rem;
+    border-bottom: 1px solid var(--aria-border);
+}
+
+.aria-card-header h3, .aria-card-header h4 {
+    margin: 0;
+    font-size: 1.1rem;
+}
+
+/* ===== Player Cards on Dashboard ===== */
+.player-card {
+    background: var(--aria-surface);
+    border: 1px solid var(--aria-border);
+    border-radius: var(--aria-radius);
+    overflow: hidden;
+    transition: transform 0.2s, box-shadow 0.2s;
+    cursor: pointer;
+}
+
+.player-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 30px rgba(224, 165, 38, 0.15);
+    border-color: var(--aria-primary);
+}
+
+.player-card-banner {
+    height: 80px;
+    background: linear-gradient(135deg, var(--aria-surface-light), var(--aria-primary-dark));
+    position: relative;
+}
+
+.player-card-avatar {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    background: var(--aria-surface);
+    border: 3px solid var(--aria-primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    color: var(--aria-primary);
+    position: absolute;
+    bottom: -32px;
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+.player-card-body {
+    padding: 2.5rem 1.2rem 1.2rem;
+    text-align: center;
+}
+
+.player-card-body h4 {
+    font-size: 1rem;
+    margin-bottom: 0.2rem;
+}
+
+.player-card-body .char-name {
+    color: var(--aria-text-muted);
+    font-size: 0.85rem;
+    margin-bottom: 0.8rem;
+}
+
+.player-card-body .char-info {
+    font-size: 0.8rem;
+    color: var(--aria-text-muted);
+}
+
+/* ===== HP Bar ===== */
+.hp-bar-container {
+    background: rgba(255,255,255,0.05);
+    border-radius: 8px;
+    height: 12px;
+    overflow: hidden;
+    margin: 0.3rem 0;
+}
+
+.hp-bar {
+    height: 100%;
+    border-radius: 8px;
+    transition: width 0.4s ease, background 0.4s;
+}
+
+.hp-bar.hp-high { background: var(--aria-hp-green); }
+.hp-bar.hp-mid { background: var(--aria-hp-yellow); }
+.hp-bar.hp-low { background: var(--aria-hp-red); }
+
+.hp-text {
+    font-size: 0.8rem;
+    color: var(--aria-text-muted);
+    text-align: center;
+}
+
+/* ===== Stat Grid ===== */
+.stat-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+    gap: 0.8rem;
+}
+
+.stat-box {
+    background: var(--aria-surface-light);
+    border: 1px solid var(--aria-border);
+    border-radius: 8px;
+    padding: 0.8rem;
+    text-align: center;
+    transition: border-color 0.2s;
+}
+
+.stat-box:hover {
+    border-color: var(--aria-primary);
+}
+
+.stat-box .stat-label {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--aria-text-muted);
+    margin-bottom: 0.3rem;
+}
+
+.stat-box .stat-value {
+    font-size: 1.4rem;
+    font-weight: 600;
+    color: var(--aria-primary);
+}
+
+.stat-box input {
+    background: transparent;
+    border: 1px solid var(--aria-border);
+    color: var(--aria-primary);
+    font-size: 1.4rem;
+    font-weight: 600;
+    text-align: center;
+    width: 100%;
+    border-radius: 4px;
+    padding: 2px;
+}
+
+.stat-box input:focus {
+    outline: none;
+    border-color: var(--aria-primary);
+    box-shadow: 0 0 0 2px rgba(224, 165, 38, 0.2);
+}
+
+/* ===== Forms ===== */
+.aria-form-group {
+    margin-bottom: 1rem;
+}
+
+.aria-form-group label {
+    display: block;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--aria-text-muted);
+    margin-bottom: 0.3rem;
+}
+
+.aria-input, .form-control {
+    background: var(--aria-surface-light) !important;
+    border: 1px solid var(--aria-border) !important;
+    color: var(--aria-text) !important;
+    border-radius: 8px !important;
+    padding: 0.5rem 0.8rem !important;
+    font-size: 0.9rem !important;
+    transition: border-color 0.2s !important;
+}
+
+.aria-input:focus, .form-control:focus {
+    border-color: var(--aria-primary) !important;
+    box-shadow: 0 0 0 2px rgba(224, 165, 38, 0.15) !important;
+    outline: none !important;
+}
+
+.form-select {
+    background-color: var(--aria-surface-light) !important;
+    border: 1px solid var(--aria-border) !important;
+    color: var(--aria-text) !important;
+    border-radius: 8px !important;
+}
+
+/* ===== Buttons ===== */
+.btn-aria {
+    background: linear-gradient(135deg, var(--aria-primary), var(--aria-primary-dark));
+    color: #000;
+    font-weight: 600;
+    border: none;
+    border-radius: 8px;
+    padding: 0.5rem 1.2rem;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.btn-aria:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 15px rgba(224, 165, 38, 0.3);
+    color: #000;
+}
+
+.btn-aria-sm {
+    padding: 0.3rem 0.7rem;
+    font-size: 0.75rem;
+}
+
+.btn-aria-outline {
+    background: transparent;
+    border: 1px solid var(--aria-primary);
+    color: var(--aria-primary);
+    border-radius: 8px;
+    padding: 0.5rem 1.2rem;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-aria-outline:hover {
+    background: rgba(224, 165, 38, 0.1);
+    color: var(--aria-primary);
+}
+
+.btn-aria-danger {
+    background: transparent;
+    border: 1px solid var(--aria-danger);
+    color: var(--aria-danger);
+    border-radius: 8px;
+    padding: 0.3rem 0.7rem;
+    font-size: 0.75rem;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-aria-danger:hover {
+    background: rgba(231, 76, 60, 0.15);
+}
+
+.btn-aria-success {
+    background: transparent;
+    border: 1px solid var(--aria-success);
+    color: var(--aria-success);
+    border-radius: 8px;
+    padding: 0.3rem 0.7rem;
+    font-size: 0.75rem;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-aria-success:hover {
+    background: rgba(46, 204, 113, 0.15);
+}
+
+/* ===== Tables ===== */
+.aria-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+}
+
+.aria-table thead th {
+    background: var(--aria-surface-light);
+    color: var(--aria-text-muted);
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    padding: 0.7rem 1rem;
+    border-bottom: 1px solid var(--aria-border);
+    font-weight: 500;
+}
+
+.aria-table tbody td {
+    padding: 0.6rem 1rem;
+    border-bottom: 1px solid rgba(45, 45, 74, 0.5);
+    font-size: 0.9rem;
+    vertical-align: middle;
+}
+
+.aria-table tbody tr:hover {
+    background: rgba(224, 165, 38, 0.03);
+}
+
+.aria-table input {
+    background: transparent;
+    border: 1px solid transparent;
+    color: var(--aria-text);
+    padding: 0.3rem 0.5rem;
+    border-radius: 4px;
+    width: 100%;
+    font-size: 0.85rem;
+}
+
+.aria-table input:focus {
+    border-color: var(--aria-primary);
+    outline: none;
+    background: var(--aria-surface-light);
+}
+
+/* ===== Badges ===== */
+.badge-aria {
+    background: rgba(224, 165, 38, 0.15);
+    color: var(--aria-primary);
+    padding: 0.2rem 0.6rem;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 500;
+}
+
+.badge-equipped {
+    background: rgba(46, 204, 113, 0.15);
+    color: var(--aria-success);
+}
+
+/* ===== Skills ===== */
+.skill-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+}
+
+.skill-row {
+    padding: 0.6rem 0.8rem;
+    border-bottom: 1px solid rgba(45, 45, 74, 0.5);
+}
+
+.skill-row:last-child {
+    border-bottom: none;
+}
+
+.skill-row-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    margin-bottom: 0.3rem;
+}
+
+.skill-row-bottom {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+}
+
+.skill-name {
+    font-weight: 500;
+    font-size: 0.9rem;
+}
+
+.skill-meta {
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+}
+
+.skill-base-label {
+    font-size: 0.7rem;
+    color: var(--aria-text-muted);
+    margin-left: 0.4rem;
+}
+
+.skill-name-input {
+    background: transparent;
+    border: 1px solid transparent;
+    color: var(--aria-text);
+    font-weight: 500;
+    font-size: 0.9rem;
+    padding: 0.2rem 0.4rem;
+    border-radius: 4px;
+    flex: 1;
+    min-width: 0;
+}
+
+.skill-name-input:focus {
+    border-color: var(--aria-primary);
+    outline: none;
+    background: var(--aria-surface-light);
+}
+
+.skill-inline-input {
+    background: transparent;
+    border: 1px solid transparent;
+    color: var(--aria-text-muted);
+    font-size: 0.8rem;
+    padding: 0.2rem 0.4rem;
+    border-radius: 4px;
+    flex: 1;
+    min-width: 0;
+}
+
+.skill-inline-input:focus {
+    border-color: var(--aria-primary);
+    outline: none;
+    background: var(--aria-surface-light);
+    color: var(--aria-text);
+}
+
+.skill-link-badge {
+    display: inline-block;
+    background: var(--aria-surface-light);
+    border: 1px solid var(--aria-border);
+    color: var(--aria-text-muted);
+    padding: 0.1rem 0.45rem;
+    border-radius: 4px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+}
+
+.skill-score {
+    display: inline-block;
+    font-weight: 700;
+    font-size: 1.1rem;
+    min-width: 36px;
+    text-align: center;
+}
+
+.skill-score.skill-high {
+    color: var(--aria-success);
+}
+
+.skill-score.skill-mid {
+    color: var(--aria-primary);
+}
+
+.skill-score.skill-low {
+    color: var(--aria-danger);
+}
+
+/* Skill bonus controls */
+.skill-bonus-controls {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+}
+
+.btn-bonus {
+    background: var(--aria-surface-light);
+    border: 1px solid var(--aria-border);
+    color: var(--aria-danger);
+    font-size: 0.7rem;
+    font-weight: 700;
+    width: 26px;
+    height: 26px;
+    border-radius: 4px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s;
+    padding: 0;
+}
+
+.btn-bonus:hover {
+    background: rgba(231, 76, 60, 0.15);
+    border-color: var(--aria-danger);
+}
+
+.btn-bonus.btn-bonus-plus {
+    color: var(--aria-success);
+}
+
+.btn-bonus.btn-bonus-plus:hover {
+    background: rgba(46, 204, 113, 0.15);
+    border-color: var(--aria-success);
+}
+
+.skill-bonus-value {
+    min-width: 36px;
+    text-align: center;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--aria-text-muted);
+}
+
+.skill-bonus-value.has-bonus {
+    color: var(--aria-primary);
+}
+
+/* Global buff display */
+.skill-buff-value {
+    min-width: 40px;
+    text-align: center;
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--aria-text-muted);
+    padding: 0.2rem 0.5rem;
+    border-radius: 6px;
+    background: var(--aria-surface-light);
+    border: 1px solid var(--aria-border);
+}
+
+.skill-buff-value.buff-positive {
+    color: var(--aria-success);
+    border-color: var(--aria-success);
+    background: rgba(46, 204, 113, 0.1);
+}
+
+.skill-buff-value.buff-negative {
+    color: var(--aria-danger);
+    border-color: var(--aria-danger);
+    background: rgba(231, 76, 60, 0.1);
+}
+
+/* Special skill score input */
+.special-skill-score-wrap {
+    display: flex;
+    justify-content: center;
+}
+
+.special-skill-score-input {
+    background: transparent !important;
+    border: 1px solid var(--aria-border) !important;
+    color: var(--aria-primary);
+    font-size: 1.1rem;
+    font-weight: 700;
+    text-align: center;
+    width: 64px;
+    border-radius: 4px;
+    padding: 2px 4px;
+    -moz-appearance: textfield;
+}
+
+.special-skill-score-input::-webkit-inner-spin-button,
+.special-skill-score-input::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+.special-skill-score-input:focus {
+    outline: none;
+    border-color: var(--aria-primary) !important;
+    box-shadow: 0 0 0 2px rgba(224, 165, 38, 0.2);
+}
+
+.special-skill-score-input.skill-high { color: var(--aria-success); }
+.special-skill-score-input.skill-mid { color: var(--aria-primary); }
+.special-skill-score-input.skill-low { color: var(--aria-danger); }
+
+/* Skill table responsive */
+.skill-table-wrapper {
+    overflow-x: auto;
+}
+
+@media (max-width: 768px) {
+    .skill-bonus-controls {
+        gap: 1px;
+    }
+    .btn-bonus {
+        width: 22px;
+        height: 22px;
+        font-size: 0.65rem;
+    }
+    .skill-bonus-value {
+        min-width: 28px;
+        font-size: 0.75rem;
+    }
+    .skill-row-bottom {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0.4rem;
+    }
+    .skill-row-bottom .skill-bonus-controls {
+        justify-content: flex-end;
+    }
+    .skill-meta {
+        flex-wrap: wrap;
+    }
+}
+
+@media (max-width: 480px) {
+    .skill-row {
+        padding: 0.5rem 0.4rem;
+    }
+    .skill-name {
+        font-size: 0.8rem;
+    }
+    .skill-score {
+        font-size: 1rem;
+    }
+}
+
+/* ===== Modal overrides ===== */
+.modal-content {
+    background: var(--aria-surface) !important;
+    border: 1px solid var(--aria-border) !important;
+    border-radius: var(--aria-radius) !important;
+}
+
+.modal-header {
+    border-bottom-color: var(--aria-border) !important;
+}
+
+.modal-footer {
+    border-top-color: var(--aria-border) !important;
+}
+
+.modal-title {
+    font-family: 'Cinzel', serif;
+    color: var(--aria-primary);
+}
+
+.btn-close {
+    filter: invert(1);
+}
+
+/* ===== Tabs ===== */
+.aria-tabs {
+    display: flex;
+    gap: 0;
+    border-bottom: 1px solid var(--aria-border);
+    margin-bottom: 1.5rem;
+}
+
+.aria-tab {
+    padding: 0.7rem 1.5rem;
+    background: none;
+    border: none;
+    color: var(--aria-text-muted);
+    font-size: 0.85rem;
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    transition: all 0.2s;
+    font-family: 'Inter', sans-serif;
+}
+
+.aria-tab:hover {
+    color: var(--aria-text);
+}
+
+.aria-tab.active {
+    color: var(--aria-primary);
+    border-bottom-color: var(--aria-primary);
+}
+
+/* ===== Hamburger Toggle ===== */
+.aria-burger {
+    display: none;
+    position: fixed;
+    top: 0.8rem;
+    left: 0.8rem;
+    z-index: 200;
+    background: var(--aria-surface);
+    border: 1px solid var(--aria-border);
+    color: var(--aria-primary);
+    font-size: 1.5rem;
+    width: 44px;
+    height: 44px;
+    border-radius: 8px;
+    cursor: pointer;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s;
+}
+
+.aria-burger:hover {
+    background: var(--aria-surface-light);
+}
+
+/* ===== Overlay ===== */
+.aria-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 90;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    pointer-events: none;
+}
+
+.aria-overlay.open {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+/* ===== Responsive - Tablet (≤1024px) ===== */
+@media (max-width: 1024px) {
+    .aria-burger {
+        display: flex;
+    }
+    .aria-sidebar {
+        transform: translateX(-100%);
+    }
+    .aria-sidebar.open {
+        transform: translateX(0);
+    }
+    .aria-overlay {
+        display: block;
+    }
+    .aria-main {
+        margin-left: 0;
+        padding: 1.5rem;
+        padding-top: 4rem; /* espace pour le burger */
+    }
+}
+
+/* ===== Responsive - Mobile (≤768px) ===== */
+@media (max-width: 768px) {
+    .aria-main {
+        padding: 1rem;
+        padding-top: 4rem;
+    }
+    .stat-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+    .player-card-body h4 {
+        font-size: 0.9rem;
+    }
+}
+
+/* ===== Responsive - Small Mobile (≤480px) ===== */
+@media (max-width: 480px) {
+    .stat-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    .aria-tabs {
+        flex-wrap: wrap;
+    }
+    .aria-tab {
+        flex: 1;
+        text-align: center;
+        padding: 0.5rem 0.8rem;
+        font-size: 0.75rem;
+    }
+}
+
+/* ===== Animations ===== */
+
+/* ===== Game Master Panel ===== */
+.gm-actions-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 1rem;
+}
+
+.gm-action-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 1.2rem 1rem;
+    background: var(--aria-surface-light);
+    border: 1px solid var(--aria-border);
+    border-radius: var(--aria-radius);
+    color: var(--aria-primary);
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.gm-action-btn i {
+    font-size: 1.5rem;
+}
+
+.gm-action-btn:hover {
+    background: rgba(224, 165, 38, 0.1);
+    border-color: var(--aria-primary);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(224, 165, 38, 0.15);
+}
+
+.gm-action-btn.gm-action-danger {
+    color: var(--aria-danger);
+}
+
+.gm-action-btn.gm-action-danger:hover {
+    background: rgba(231, 76, 60, 0.1);
+    border-color: var(--aria-danger);
+    box-shadow: 0 4px 15px rgba(231, 76, 60, 0.15);
+}
+
+.gm-player-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.8rem;
+}
+
+.gm-player-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.8rem 1rem;
+    background: var(--aria-surface-light);
+    border: 1px solid var(--aria-border);
+    border-radius: 8px;
+    flex-wrap: wrap;
+}
+
+.gm-player-info {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    flex: 1;
+    min-width: 180px;
+}
+
+.gm-player-hp {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-shrink: 0;
+}
+
+.gm-player-actions {
+    display: flex;
+    gap: 0.4rem;
+    flex-shrink: 0;
+}
+
+.gm-player-buff {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.2rem;
+    flex-shrink: 0;
+}
+
+/* Buff banner on player's skill page */
+.buff-banner {
+    padding: 0.8rem 1.2rem !important;
+    margin-bottom: 1rem !important;
+}
+
+.buff-banner-positive {
+    border-color: var(--aria-success) !important;
+    background: rgba(46, 204, 113, 0.08) !important;
+    color: var(--aria-success);
+}
+
+.buff-banner-negative {
+    border-color: var(--aria-danger) !important;
+    background: rgba(231, 76, 60, 0.08) !important;
+    color: var(--aria-danger);
+}
+
+@media (max-width: 768px) {
+    .gm-actions-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    .gm-player-row {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    .gm-player-actions {
+        justify-content: flex-end;
+    }
+}
+
+@media (max-width: 480px) {
+    .gm-actions-grid {
+        grid-template-columns: 1fr 1fr;
+    }
+    .gm-action-btn {
+        padding: 0.8rem;
+        font-size: 0.75rem;
+    }
+    .gm-action-btn i {
+        font-size: 1.2rem;
+    }
+}
+
+/* ===== Animations (continued) ===== */
+@@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.fade-in {
+    animation: fadeIn 0.3s ease;
+}
+
+/* ===== Toast ===== */
+.aria-toast {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background: var(--aria-surface);
+    border: 1px solid var(--aria-success);
+    border-radius: 8px;
+    padding: 0.8rem 1.2rem;
+    color: var(--aria-success);
+    z-index: 9999;
+    animation: fadeIn 0.3s ease;
+    font-size: 0.85rem;
+}
+
+#blazor-error-ui {
+    display: none;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    z-index: 1000;
+    padding: 0.7rem 1.25rem;
+    background: var(--aria-danger);
+    color: white;
+    text-align: center;
+    font-size: 0.85rem;
+}
