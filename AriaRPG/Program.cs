@@ -7,8 +7,11 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddRazorPages();
 builder.Services.AddServerSideBlazor();
 
+var dbPath = Path.Combine(builder.Environment.ContentRootPath, "data", "aria.db");
+Directory.CreateDirectory(Path.GetDirectoryName(dbPath)!);
+
 builder.Services.AddDbContextFactory<AriaDbContext>(options =>
-    options.UseSqlite("Data Source=aria.db"));
+    options.UseSqlite($"Data Source={dbPath}"));
 
 builder.Services.AddScoped<AriaService>();
 
