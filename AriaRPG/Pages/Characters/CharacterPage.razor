@@ -48,6 +48,9 @@
             <button class="aria-tab @(activeTab == 4 ? "active" : "")" @onclick="() => activeTab = 4">
                 <i class="bi bi-backpack"></i> Inventaire
             </button>
+            <button class="aria-tab @(activeTab == 5 ? "active" : "")" @onclick="() => activeTab = 5">
+                <i class="bi bi-journal-richtext"></i> Notes
+            </button>
         </div>
 
         @switch (activeTab)
@@ -66,6 +69,9 @@
                 break;
             case 4:
                 <InventoryPanel CharacterId="player.Character.Id" Items="player.Character.Inventory" OnChanged="Reload" />
+                break;
+            case 5:
+                <NotesPanel />
                 break;
         }
     }

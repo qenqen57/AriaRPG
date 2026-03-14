@@ -13,6 +13,8 @@ public class AriaDbContext : DbContext
     public DbSet<CharacterSpecialSkill> CharacterSpecialSkills => Set<CharacterSpecialSkill>();
     public DbSet<InventoryItem> InventoryItems => Set<InventoryItem>();
     public DbSet<Weapon> Weapons => Set<Weapon>();
+    public DbSet<GameMap> GameMaps => Set<GameMap>();
+    public DbSet<SessionNote> SessionNotes => Set<SessionNote>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

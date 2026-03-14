@@ -1,4 +1,5 @@
 @page "/gamemaster/{PlayerId:int}"
+@using Microsoft.AspNetCore.Components.Forms
 @inject AriaService AriaService
 @inject NavigationManager Nav
 
@@ -146,14 +147,110 @@
             }
         </div>
 
-        <!-- Notes du MJ -->
+        <!-- Notes de Session -->
         <div class="aria-card">
             <div class="aria-card-header">
-                <h3><i class="bi bi-journal-text"></i> Notes de Session</h3>
+                <h3><i class="bi bi-journal-richtext"></i> Notes de Session</h3>
+                <a href="/notes" class="btn-aria-outline btn-aria-sm">
+                    <i class="bi bi-box-arrow-up-right"></i> Voir tout
+                </a>
             </div>
-            <textarea class="aria-input" rows="5" style="width: 100%; resize: vertical;"
-                      placeholder="Prenez des notes pour cette session..."
-                      @bind="sessionNotes"></textarea>
+            <NotesPanel />
+        </div>
+
+        <!-- Map Management -->
+        <div class="aria-card">
+            <div class="aria-card-header">
+                <h3><i class="bi bi-map"></i> Gestion des Cartes</h3>
+                @if (isUploading)
+                {
+                    <span style="color: var(--aria-primary); font-size: 0.8rem;">
+                        <i class="bi bi-hourglass-split"></i> Upload en cours...
+                    </span>
+                }
+            </div>
+
+            <!-- Upload World Map -->
+            <div style="margin-bottom: 1.5rem;">
+                <h4 style="font-size: 0.9rem; margin-bottom: 0.5rem;"><i class="bi bi-globe-americas"></i> Carte du Monde</h4>
+                @if (worldMap != null && !string.IsNullOrEmpty(worldMap.ImageData))
+                {
+                    <div class="map-container" style="max-height: 200px; margin-bottom: 0.5rem;">
+                        <img src="@worldMap.ImageData" alt="Carte du monde" class="map-image" style="max-height: 200px;" />
+                    </div>
+                }
+                <div style="display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap;">
+                    <InputFile OnChange="OnWorldMapSelected" accept="image/*"
+                               class="form-control" style="max-width: 300px; font-size: 0.8rem;" />
+                    @if (worldMap != null)
+                    {
+                        <button class="btn-aria-danger btn-aria-sm" @onclick="DeleteWorldMap">
+                            <i class="bi bi-trash"></i> Supprimer
+                        </button>
+                    }
+                </div>
+            </div>
+
+            <!-- Upload Local Map -->
+            <div style="border-top: 1px solid var(--aria-border); padding-top: 1rem;">
+                <h4 style="font-size: 0.9rem; margin-bottom: 0.5rem;"><i class="bi bi-geo-alt-fill"></i> Cartes Locales</h4>
+
+                <div style="display: flex; gap: 0.5rem; align-items: center; margin-bottom: 1rem; flex-wrap: wrap;">
+                    <input class="aria-input" style="max-width: 200px;" placeholder="Nom de la zone..."
+                           @bind="newLocalMapName" />
+                    <InputFile OnChange="OnLocalMapSelected" accept="image/*"
+                               class="form-control" style="max-width: 250px; font-size: 0.8rem;"
+                               @ref="localFileInput" />
+                    <button class="btn-aria btn-aria-sm" @onclick="UploadLocalMap" disabled="@(localMapData == null)">
+                        <i class="bi bi-upload"></i> Ajouter
+                    </button>
+                </div>
+
+                @if (localMaps != null && localMaps.Count > 0)
+                {
+                    <div class="gm-map-list">
+                        @foreach (var map in localMaps)
+                        {
+                            <div class="gm-map-row @(map.IsActive ? "gm-map-active" : "")">
+                                <div style="display: flex; align-items: center; gap: 0.8rem; flex: 1; min-width: 0;">
+                                    @if (!string.IsNullOrEmpty(map.ImageData))
+                                    {
+                                        <img src="@map.ImageData" alt="@map.Name" class="gm-map-thumb" />
+                                    }
+                                    <div style="min-width: 0;">
+                                        <strong style="display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">@map.Name</strong>
+                                        @if (map.IsActive)
+                                        {
+                                            <span style="font-size: 0.7rem; color: var(--aria-success);">
+                                                <i class="bi bi-broadcast"></i> Active
+                                            </span>
+                                        }
+                                    </div>
+                                </div>
+                                <div style="display: flex; gap: 0.3rem; flex-shrink: 0;">
+                                    @if (!map.IsActive)
+                                    {
+                                        <button class="btn-aria-success btn-aria-sm" title="Activer cette carte"
+                                                @onclick="() => ActivateMap(map.Id)">
+                                            <i class="bi bi-broadcast"></i> Activer
+                                        </button>
+                                    }
+                                    <button class="btn-aria-danger btn-aria-sm" title="Supprimer"
+                                            @onclick="() => DeleteLocalMap(map.Id)">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                }
+                else
+                {
+                    <p style="color: var(--aria-text-muted); font-size: 0.85rem;">
+                        Aucune carte locale. Uploadez une image pour commencer.
+                    </p>
+                }
+            </div>
         </div>
     }
 </div>
@@ -170,15 +267,24 @@
     private List<Player>? allPlayers;
     private int? diceResult;
     private string diceDescription = "";
-    private string sessionNotes = "";
     private bool showToast;
     private string toastMessage = "";
     private Random rng = new();
+
+    // Maps
+    private GameMap? worldMap;
+    private List<GameMap>? localMaps;
+    private string newLocalMapName = "";
+    private string? localMapData;
+    private InputFile? localFileInput;
+    private bool isUploading;
 
     protected override async Task OnParametersSetAsync()
     {
         player = await AriaService.GetPlayerAsync(PlayerId);
         allPlayers = await AriaService.GetPlayersAsync();
+        worldMap = await AriaService.GetWorldMapAsync();
+        localMaps = await AriaService.GetAllLocalMapsAsync();
     }
 
     private void RollDice()
@@ -307,5 +413,102 @@
         await Task.Delay(2500);
         showToast = false;
         StateHasChanged();
+    }
+
+    // Map methods
+    private async Task<string> ReadFileAsBase64Async(IBrowserFile file)
+    {
+        const long maxSize = 10 * 1024 * 1024;
+        using var ms = new System.IO.MemoryStream();
+        await file.OpenReadStream(maxAllowedSize: maxSize).CopyToAsync(ms);
+        var bytes = ms.ToArray();
+        return $"data:{file.ContentType};base64,{Convert.ToBase64String(bytes)}";
+    }
+
+    private async Task OnWorldMapSelected(InputFileChangeEventArgs e)
+    {
+        var file = e.File;
+        if (file == null) return;
+
+        isUploading = true;
+        StateHasChanged();
+        try
+        {
+            var base64 = await ReadFileAsBase64Async(file);
+
+            var map = worldMap ?? new GameMap();
+            map.Name = "Carte du Monde";
+            map.Type = MapType.World;
+            map.ImageData = base64;
+            await AriaService.SaveMapAsync(map);
+            worldMap = await AriaService.GetWorldMapAsync();
+            await ShowToast("Carte du monde mise à jour !");
+        }
+        finally
+        {
+            isUploading = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task DeleteWorldMap()
+    {
+        if (worldMap != null)
+        {
+            await AriaService.DeleteMapAsync(worldMap.Id);
+            worldMap = null;
+            await ShowToast("Carte du monde supprimée");
+        }
+    }
+
+    private async Task OnLocalMapSelected(InputFileChangeEventArgs e)
+    {
+        var file = e.File;
+        if (file == null) return;
+
+        isUploading = true;
+        StateHasChanged();
+        try
+        {
+            localMapData = await ReadFileAsBase64Async(file);
+        }
+        finally
+        {
+            isUploading = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task UploadLocalMap()
+    {
+        if (string.IsNullOrEmpty(localMapData)) return;
+
+        var map = new GameMap
+        {
+            Name = string.IsNullOrWhiteSpace(newLocalMapName) ? "Nouvelle zone" : newLocalMapName,
+            Type = MapType.Local,
+            ImageData = localMapData,
+            IsActive = localMaps == null || localMaps.Count == 0
+        };
+        await AriaService.SaveMapAsync(map);
+        localMaps = await AriaService.GetAllLocalMapsAsync();
+        newLocalMapName = "";
+        localMapData = null;
+        await ShowToast($"Carte « {map.Name} » ajoutée !");
+    }
+
+    private async Task ActivateMap(int mapId)
+    {
+        await AriaService.SetActiveLocalMapAsync(mapId);
+        localMaps = await AriaService.GetAllLocalMapsAsync();
+        var name = localMaps?.FirstOrDefault(m => m.IsActive)?.Name ?? "?";
+        await ShowToast($"Carte « {name} » activée !");
+    }
+
+    private async Task DeleteLocalMap(int mapId)
+    {
+        await AriaService.DeleteMapAsync(mapId);
+        localMaps = await AriaService.GetAllLocalMapsAsync();
+        await ShowToast("Carte supprimée");
     }
 }

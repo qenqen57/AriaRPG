@@ -1,0 +1,356 @@
+@inject AriaService AriaService
+@implements IAsyncDisposable
+
+<div class="notes-panel">
+
+    <!-- Toolbar: search + new -->
+    <div class="notes-toolbar">
+        <div class="notes-search-wrap">
+            <i class="bi bi-search notes-search-icon"></i>
+            <input class="notes-search-input"
+                   placeholder="Rechercher dans les notes..."
+                   @bind="searchQuery"
+                   @bind:event="oninput" />
+            @if (!string.IsNullOrEmpty(searchQuery))
+            {
+                <button class="notes-search-clear" @onclick="() => searchQuery = string.Empty">
+                    <i class="bi bi-x-lg"></i>
+                </button>
+            }
+        </div>
+        <button class="btn-aria btn-aria-sm" @onclick="NewNote" style="flex-shrink:0;">
+            <i class="bi bi-plus-lg"></i> Nouvelle Note
+        </button>
+    </div>
+
+    <!-- Edit form -->
+    @if (editingNote != null)
+    {
+        <div class="notes-edit-form">
+            <div class="aria-form-group">
+                <label>Titre</label>
+                <input class="form-control" placeholder="Ex: Session 3 — La Forêt Maudite"
+                       value="@editingNote.Title"
+                       @oninput="e => OnFieldChanged(() => editingNote!.Title = e.Value?.ToString() ?? string.Empty)" />
+            </div>
+            <div style="display:flex; gap: 1rem; flex-wrap: wrap;">
+                <div class="aria-form-group" style="flex:1; min-width:150px;">
+                    <label>Date de la session</label>
+                    <input type="date" class="form-control"
+                           value="@editingNote.SessionDate.ToString("yyyy-MM-dd")"
+                           @onchange="e => OnFieldChanged(() => editingNote!.SessionDate = DateTime.Parse(e.Value!.ToString()!))" />
+                </div>
+            </div>
+            <div class="aria-form-group">
+                <label>Contenu</label>
+                <textarea class="form-control" rows="8" style="resize: vertical;"
+                          placeholder="Résumé de la session, événements importants, PNJ rencontrés..."
+                          value="@editingNote.Content"
+                          @oninput="e => OnFieldChanged(() => editingNote!.Content = e.Value?.ToString() ?? string.Empty)"></textarea>
+            </div>
+            <div style="display: flex; gap: 0.5rem; justify-content: flex-end; align-items: center;">
+                <span class="notes-autosave-status notes-status-@saveStatus">
+                    @if (saveStatus == "pending") { <i class="bi bi-circle-fill"></i><span> Non sauvegardé</span> }
+                    else if (saveStatus == "saving") { <i class="bi bi-arrow-repeat notes-spin"></i><span> Sauvegarde...</span> }
+                    else { <i class="bi bi-check-circle-fill"></i><span> Sauvegardé</span> }
+                </span>
+                <button class="btn-aria-outline btn-aria-sm" @onclick="CancelEdit">
+                    <i class="bi bi-x-lg"></i> Fermer
+                </button>
+                <button class="btn-aria btn-aria-sm" @onclick="SaveNoteNow">
+                    <i class="bi bi-save"></i> Sauvegarder
+                </button>
+            </div>
+        </div>
+    }
+
+    <!-- Results count when searching -->
+    @if (!string.IsNullOrWhiteSpace(searchQuery))
+    {
+        <div class="notes-search-results-info">
+            <i class="bi bi-search"></i>
+            @FilteredNotes.Count() résultat(s) pour « @searchQuery »
+        </div>
+    }
+
+    <!-- Notes list -->
+    @if (allNotes == null)
+    {
+        <p style="color: var(--aria-text-muted); padding: 1rem;">
+            <i class="bi bi-hourglass-split"></i> Chargement...
+        </p>
+    }
+    else if (!FilteredNotes.Any())
+    {
+        <div style="text-align: center; padding: 2.5rem 1rem; color: var(--aria-text-muted);">
+            <i class="bi bi-journal" style="font-size: 2.5rem; display: block; margin-bottom: 0.8rem; opacity: 0.4;"></i>
+            @if (!string.IsNullOrWhiteSpace(searchQuery))
+            {
+                <p>Aucune note ne contient « @searchQuery »</p>
+            }
+            else
+            {
+                <p>Aucune note pour le moment.</p>
+                <small>Cliquez sur « Nouvelle Note » pour commencer.</small>
+            }
+        </div>
+    }
+    else
+    {
+        @foreach (var yearGroup in FilteredNotes
+            .GroupBy(n => n.SessionDate.Year)
+            .OrderByDescending(g => g.Key))
+        {
+            <div class="notes-year-header">@yearGroup.Key</div>
+            <div class="notes-timeline">
+                @foreach (var note in yearGroup.OrderByDescending(n => n.SessionDate))
+                {
+                    <div class="notes-entry @(expandedId == note.Id ? "expanded" : "")">
+                        <div class="notes-dot"></div>
+                        <div class="notes-card">
+                            <!-- Header (always visible, clickable to expand) -->
+                            <div class="notes-card-header" @onclick="() => Toggle(note.Id)">
+                                <div style="flex:1; min-width:0;">
+                                    <div class="notes-date">
+                                        <i class="bi bi-calendar3"></i>
+                                        @note.SessionDate.ToString("dd MMMM yyyy",
+                                            new System.Globalization.CultureInfo("fr-FR"))
+                                    </div>
+                                    <div class="notes-title">@HighlightTitle(note.Title)</div>
+                                </div>
+                                <div style="display:flex; align-items:center; gap:0.4rem;">
+                                    <button class="btn-bonus btn-bonus-plus"
+                                            style="width:28px; height:28px;"
+                                            title="Modifier"
+                                            @onclick="() => EditNote(note)"
+                                            @onclick:stopPropagation="true">
+                                        <i class="bi bi-pencil"></i>
+                                    </button>
+                                    <button class="btn-bonus"
+                                            style="width:28px; height:28px;"
+                                            title="Supprimer"
+                                            @onclick="() => DeleteNote(note.Id)"
+                                            @onclick:stopPropagation="true">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                    <i class="bi @(expandedId == note.Id ? "bi-chevron-up" : "bi-chevron-down") notes-chevron"></i>
+                                </div>
+                            </div>
+
+                            <!-- Content (collapsible) -->
+                            @if (expandedId == note.Id)
+                            {
+                                <div class="notes-content">
+                                    @if (string.IsNullOrWhiteSpace(searchQuery))
+                                    {
+                                        @foreach (var line in note.Content.Split('\n'))
+                                        {
+                                            <p style="margin: 0 0 0.4rem;">@line</p>
+                                        }
+                                    }
+                                    else
+                                    {
+                                        @((MarkupString)HighlightContent(note.Content))
+                                    }
+                                </div>
+                                <div class="notes-footer">
+                                    <small>
+                                        <i class="bi bi-pencil"></i>
+                                        Modifié le @note.UpdatedAt.ToString("dd/MM/yyyy à HH:mm")
+                                    </small>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+    }
+</div>
+
+@if (showToast)
+{
+    <div class="aria-toast"><i class="bi bi-check-circle"></i> @toastMessage</div>
+}
+
+@code {
+    private List<SessionNote>? allNotes;
+    private int? expandedId;
+    private SessionNote? editingNote;
+    private string searchQuery = string.Empty;
+    private bool showToast;
+    private string toastMessage = string.Empty;
+
+    // Auto-save
+    private string saveStatus = "saved"; // "pending" | "saving" | "saved"
+    private CancellationTokenSource? _debounceCts;
+    private const int DebounceMs = 1500;
+
+    private IEnumerable<SessionNote> FilteredNotes =>
+        allNotes == null
+            ? Enumerable.Empty<SessionNote>()
+            : string.IsNullOrWhiteSpace(searchQuery)
+                ? allNotes
+                : allNotes.Where(n =>
+                    n.Title.Contains(searchQuery, StringComparison.OrdinalIgnoreCase) ||
+                    n.Content.Contains(searchQuery, StringComparison.OrdinalIgnoreCase));
+
+    protected override async Task OnInitializedAsync()
+    {
+        await Load();
+        expandedId = allNotes?.FirstOrDefault()?.Id;
+    }
+
+    private async Task Load()
+    {
+        allNotes = await AriaService.GetSessionNotesAsync();
+    }
+
+    private void Toggle(int id)
+    {
+        expandedId = expandedId == id ? null : id;
+    }
+
+    private void OnFieldChanged(Action updateAction)
+    {
+        updateAction();
+        saveStatus = "pending";
+        _debounceCts?.Cancel();
+        _debounceCts?.Dispose();
+        _debounceCts = new CancellationTokenSource();
+        var token = _debounceCts.Token;
+        _ = Task.Delay(DebounceMs, token).ContinueWith(async t =>
+        {
+            if (!t.IsCanceled)
+                await InvokeAsync(SaveNoteAuto);
+        }, TaskScheduler.Default);
+    }
+
+    private async Task SaveNoteAuto()
+    {
+        if (editingNote == null || saveStatus != "pending") return;
+        saveStatus = "saving";
+        StateHasChanged();
+        if (string.IsNullOrWhiteSpace(editingNote.Title))
+            editingNote.Title = "Session sans titre";
+        var saved = await AriaService.SaveSessionNoteAsync(editingNote);
+        if (editingNote.Id == 0) editingNote.Id = saved.Id;
+        await Load();
+        saveStatus = "saved";
+        StateHasChanged();
+    }
+
+    private void NewNote()
+    {
+        expandedId = null;
+        editingNote = new SessionNote
+        {
+            SessionDate = DateTime.Today,
+            Title = $"Session {(allNotes?.Count ?? 0) + 1}"
+        };
+        saveStatus = "saved";
+    }
+
+    private void EditNote(SessionNote note)
+    {
+        editingNote = new SessionNote
+        {
+            Id = note.Id,
+            Title = note.Title,
+            Content = note.Content,
+            SessionDate = note.SessionDate,
+            UpdatedAt = note.UpdatedAt
+        };
+        saveStatus = "saved";
+    }
+
+    private void CancelEdit()
+    {
+        _debounceCts?.Cancel();
+        _debounceCts?.Dispose();
+        _debounceCts = null;
+        editingNote = null;
+        saveStatus = "saved";
+    }
+
+    private async Task SaveNoteNow()
+    {
+        if (editingNote == null) return;
+        _debounceCts?.Cancel();
+        if (string.IsNullOrWhiteSpace(editingNote.Title))
+            editingNote.Title = "Session sans titre";
+        saveStatus = "saving";
+        StateHasChanged();
+        await AriaService.SaveSessionNoteAsync(editingNote);
+        await Load();
+        expandedId = allNotes?.FirstOrDefault()?.Id;
+        editingNote = null;
+        saveStatus = "saved";
+        await ShowToast("Note sauvegardée !");
+    }
+
+    private async Task DeleteNote(int id)
+    {
+        await AriaService.DeleteSessionNoteAsync(id);
+        if (expandedId == id) expandedId = null;
+        await Load();
+        await ShowToast("Note supprimée");
+    }
+
+    // Highlight search term in title (returns plain string, used in MarkupString safely)
+    private MarkupString HighlightTitle(string title)
+    {
+        if (string.IsNullOrWhiteSpace(searchQuery)) return new MarkupString(title);
+        var escaped = System.Net.WebUtility.HtmlEncode(title);
+        var escapedQuery = System.Net.WebUtility.HtmlEncode(searchQuery);
+        var highlighted = System.Text.RegularExpressions.Regex.Replace(
+            escaped,
+            System.Text.RegularExpressions.Regex.Escape(escapedQuery),
+            m => $"<mark class='notes-highlight'>{m.Value}</mark>",
+            System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+        return new MarkupString(highlighted);
+    }
+
+    private string HighlightContent(string content)
+    {
+        if (string.IsNullOrWhiteSpace(searchQuery)) return System.Net.WebUtility.HtmlEncode(content);
+        var lines = content.Split('\n');
+        var sb = new System.Text.StringBuilder();
+        foreach (var line in lines)
+        {
+            var escaped = System.Net.WebUtility.HtmlEncode(line);
+            var escapedQuery = System.Net.WebUtility.HtmlEncode(searchQuery);
+            var highlighted = System.Text.RegularExpressions.Regex.Replace(
+                escaped,
+                System.Text.RegularExpressions.Regex.Escape(escapedQuery),
+                m => $"<mark class='notes-highlight'>{m.Value}</mark>",
+                System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+            sb.Append($"<p style='margin:0 0 0.4rem'>{highlighted}</p>");
+        }
+        return sb.ToString();
+    }
+
+    private async Task ShowToast(string msg)
+    {
+        toastMessage = msg;
+        showToast = true;
+        StateHasChanged();
+        await Task.Delay(2000);
+        showToast = false;
+        StateHasChanged();
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        _debounceCts?.Cancel();
+        _debounceCts?.Dispose();
+        _debounceCts = null;
+        // Sauvegarde immédiate si des changements sont en attente
+        if (editingNote != null && saveStatus == "pending")
+        {
+            if (string.IsNullOrWhiteSpace(editingNote.Title))
+                editingNote.Title = "Session sans titre";
+            await AriaService.SaveSessionNoteAsync(editingNote);
+        }
+    }
+}

@@ -1,0 +1,77 @@
+@page "/maps"
+@inject AriaService AriaService
+
+<PageTitle>Cartes - Aria RPG</PageTitle>
+
+<div class="fade-in">
+    <div style="margin-bottom: 2rem;">
+        <h1><i class="bi bi-map"></i> Cartes</h1>
+        <p style="color: var(--aria-text-muted);">Carte du monde et carte de la zone actuelle</p>
+    </div>
+
+    <!-- Active Local Map -->
+    <div class="aria-card">
+        <div class="aria-card-header">
+            <h4><i class="bi bi-geo-alt-fill"></i> @(activeLocal?.Name ?? "Zone Actuelle")</h4>
+            @if (activeLocal != null)
+            {
+                <span class="badge-aria" style="background: rgba(46, 204, 113, 0.15); color: var(--aria-success);">
+                    <i class="bi bi-broadcast"></i> Active
+                </span>
+            }
+        </div>
+        @if (activeLocal != null && !string.IsNullOrEmpty(activeLocal.ImageData))
+        {
+            <div class="map-container">
+                <img src="@activeLocal.ImageData" alt="@activeLocal.Name" class="map-image" />
+            </div>
+        }
+        else
+        {
+            <div class="map-placeholder">
+                <i class="bi bi-geo-alt"></i>
+                <p>Aucune carte locale active</p>
+                <small>Le Maître de Jeu définira la carte quand vous arriverez dans une nouvelle zone</small>
+            </div>
+        }
+    </div>
+
+    <!-- World Map -->
+    <div class="aria-card">
+        <div class="aria-card-header" style="cursor: pointer;" @onclick="() => showWorld = !showWorld">
+            <h4>
+                <i class="bi @(showWorld ? "bi-chevron-down" : "bi-chevron-right")" style="font-size: 0.85rem; margin-right: 0.3rem;"></i>
+                <i class="bi bi-globe-americas"></i> Carte du Monde
+            </h4>
+        </div>
+        @if (showWorld)
+        {
+            @if (worldMap != null && !string.IsNullOrEmpty(worldMap.ImageData))
+            {
+                <div class="map-container">
+                    <img src="@worldMap.ImageData" alt="Carte du Monde" class="map-image" />
+                </div>
+            }
+            else
+            {
+                <div class="map-placeholder">
+                    <i class="bi bi-globe-americas"></i>
+                    <p>Aucune carte du monde</p>
+                    <small>Le Maître de Jeu n'a pas encore ajouté de carte du monde</small>
+                </div>
+            }
+        }
+    </div>
+</div>
+
+@code {
+    private GameMap? worldMap;
+    private GameMap? activeLocal;
+    private bool showWorld = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        worldMap = await AriaService.GetWorldMapAsync();
+        activeLocal = await AriaService.GetActiveLocalMapAsync();
+    }
+}

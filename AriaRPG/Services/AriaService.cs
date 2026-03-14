@@ -206,4 +206,136 @@ public class AriaService
             await db.SaveChangesAsync();
         }
     }
+
+    // Maps
+    public async Task<GameMap?> GetWorldMapAsync()
+    {
+        using var db = await _factory.CreateDbContextAsync();
+        return await db.GameMaps.FirstOrDefaultAsync(m => m.Type == MapType.World);
+    }
+
+    public async Task<GameMap?> GetActiveLocalMapAsync()
+    {
+        using var db = await _factory.CreateDbContextAsync();
+        return await db.GameMaps.FirstOrDefaultAsync(m => m.Type == MapType.Local && m.IsActive);
+    }
+
+    public async Task<List<GameMap>> GetAllLocalMapsAsync()
+    {
+        using var db = await _factory.CreateDbContextAsync();
+        return await db.GameMaps
+            .Where(m => m.Type == MapType.Local)
+            .OrderByDescending(m => m.IsActive)
+            .ThenBy(m => m.Name)
+            .ToListAsync();
+    }
+
+    public async Task SaveMapAsync(GameMap map)
+    {
+        using var db = await _factory.CreateDbContextAsync();
+        if (map.Id == 0)
+        {
+            // For world maps, replace existing
+            if (map.Type == MapType.World)
+            {
+                var existing = await db.GameMaps.FirstOrDefaultAsync(m => m.Type == MapType.World);
+                if (existing != null)
+                {
+                    existing.Name = map.Name;
+                    existing.ImageData = map.ImageData;
+                }
+                else
+                {
+                    db.GameMaps.Add(map);
+                }
+            }
+            else
+            {
+                db.GameMaps.Add(map);
+            }
+        }
+        else
+        {
+            var existing = await db.GameMaps.FindAsync(map.Id);
+            if (existing != null)
+            {
+                existing.Name = map.Name;
+                existing.ImageData = map.ImageData;
+                existing.IsActive = map.IsActive;
+            }
+        }
+        await db.SaveChangesAsync();
+    }
+
+    public async Task SetActiveLocalMapAsync(int mapId)
+    {
+        using var db = await _factory.CreateDbContextAsync();
+        var allLocal = await db.GameMaps.Where(m => m.Type == MapType.Local).ToListAsync();
+        foreach (var m in allLocal)
+        {
+            m.IsActive = m.Id == mapId;
+        }
+        await db.SaveChangesAsync();
+    }
+
+    public async Task DeleteMapAsync(int mapId)
+    {
+        using var db = await _factory.CreateDbContextAsync();
+        var map = await db.GameMaps.FindAsync(mapId);
+        if (map != null)
+        {
+            db.GameMaps.Remove(map);
+            await db.SaveChangesAsync();
+        }
+    }
+
+    // Session Notes
+    public async Task<List<SessionNote>> GetSessionNotesAsync()
+    {
+        using var db = await _factory.CreateDbContextAsync();
+        return await db.SessionNotes
+            .OrderByDescending(n => n.SessionDate)
+            .ThenByDescending(n => n.UpdatedAt)
+            .ToListAsync();
+    }
+
+    public async Task<SessionNote?> GetSessionNoteAsync(int id)
+    {
+        using var db = await _factory.CreateDbContextAsync();
+        return await db.SessionNotes.FindAsync(id);
+    }
+
+    public async Task<SessionNote> SaveSessionNoteAsync(SessionNote note)
+    {
+        using var db = await _factory.CreateDbContextAsync();
+        note.UpdatedAt = DateTime.Now;
+        if (note.Id == 0)
+        {
+            db.SessionNotes.Add(note);
+        }
+        else
+        {
+            var existing = await db.SessionNotes.FindAsync(note.Id);
+            if (existing != null)
+            {
+                existing.Title = note.Title;
+                existing.Content = note.Content;
+                existing.SessionDate = note.SessionDate;
+                existing.UpdatedAt = note.UpdatedAt;
+            }
+        }
+        await db.SaveChangesAsync();
+        return note;
+    }
+
+    public async Task DeleteSessionNoteAsync(int id)
+    {
+        using var db = await _factory.CreateDbContextAsync();
+        var note = await db.SessionNotes.FindAsync(id);
+        if (note != null)
+        {
+            db.SessionNotes.Remove(note);
+            await db.SaveChangesAsync();
+        }
+    }
 }
